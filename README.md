@@ -2,170 +2,270 @@
 
 A Flask web application for locating office resources (people, printers, rooms, etc.) on interactive floorplans. Perfect for small organizations that need a simple way to help employees find resources within their office space.
 
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Python](https://img.shields.io/badge/python-3.14+-blue.svg)
+![Flask](https://img.shields.io/badge/flask-3.1+-green.svg)
+
 ## Features
 
-- **Search for Resources**: Find people, printers, rooms, and other office resources by name
-- **Interactive Floorplans**: View resources on visual floorplans with coordinate-based positioning
-- **Admin Management**: Add/delete floorplans and manage resources
-- **RESTful API**: Clean JSON API for easy integration
-- Flask application with factory pattern
-- SQLite database backend
-- SQLAlchemy ORM for database operations
-- Flask-Migrate for automatic schema migrations
+### For Users
+- **Search Interface**: Modern, intuitive web UI for searching resources by name
+- **Interactive Floorplans**: View resource locations on visual floorplans with animated cursor
+- **Multiple Results**: Smart handling when multiple resources match your search
+- **Responsive Design**: Works on desktop and mobile devices
+
+### For Administrators
+- **Admin Panel**: Comprehensive management interface at `/admin`
+- **Upload Floorplans**: Drag and drop floorplan images (PNG, JPG, SVG, etc.)
+- **Interactive Resource Placement**: Click on floorplans to set resource coordinates
+- **Full CRUD Operations**: Create, read, update, and delete resources and floorplans
+- **Real-time Preview**: See resources on floorplans as you place them
+
+### Technical Features
+- RESTful JSON API
+- CSRF protection for security
+- SQLite database with SQLAlchemy ORM
+- Database migrations with Flask-Migrate
+- Application factory pattern for testability
+
+## Screenshots
+
+### User Search Interface
+Search for any resource and see its location on the floorplan with an animated cursor.
+
+### Admin Panel
+Upload floorplans, add resources, and manage everything through an intuitive interface.
+
+## Quick Start
+
+### Prerequisites
+
+- Python 3.14 or higher
+- [uv](https://github.com/astral-sh/uv) (recommended) or pip
+
+### Installation
+
+1. **Clone the repository**
+```bash
+git clone <your-repo-url>
+cd office-resource-locator
+```
+
+2. **Install dependencies**
+```bash
+uv sync
+```
+
+3. **Initialize the database**
+```bash
+uv run flask db upgrade
+```
+
+4. **Add sample data (optional)**
+```bash
+uv run python add_test_data.py
+```
+
+5. **Run the application**
+```bash
+uv run python run.py
+```
+
+6. **Open your browser**
+- User Interface: http://localhost:8000
+- Admin Panel: http://localhost:8000/admin
 
 ## Project Structure
 
 ```
 .
 ├── app/
-│   ├── __init__.py       # Application factory
-│   ├── models.py         # Database models
-│   └── routes.py         # API routes
-├── run.py                # Application entry point
-└── requirements.txt      # Python dependencies
+│   ├── __init__.py           # Application factory with CSRF protection
+│   ├── models.py             # Database models (Floorplan, Resource)
+│   ├── routes.py             # API routes and view handlers
+│   ├── static/
+│   │   ├── css/              # Stylesheets for user and admin UIs
+│   │   ├── js/               # JavaScript for interactivity
+│   │   └── floorplans/       # Uploaded floorplan images
+│   └── templates/
+│       ├── index.html        # User search interface
+│       └── admin.html        # Admin management panel
+├── migrations/               # Database migration scripts
+├── run.py                    # Application entry point
+├── CLAUDE.md                 # Developer documentation
+├── LICENSE.txt               # MIT License
+└── pyproject.toml           # Project dependencies (uv/pip)
 ```
 
-## Setup Instructions
+## Usage
 
-### 1. Install Dependencies
+### For Users
 
-```bash
-pip install -r requirements.txt
-```
+1. Go to http://localhost:8000
+2. Enter a search term (e.g., "Conference Room", "John", "Printer")
+3. If multiple matches are found, select the one you want
+4. View the floorplan with an animated cursor showing the location
 
-### 2. Initialize Database Migrations
+### For Administrators
 
-```bash
-flask db init
-```
+1. Go to http://localhost:8000/admin
+2. **Upload a Floorplan:**
+   - Enter a name (e.g., "First Floor")
+   - Select an image file
+   - Click "Upload Floorplan"
 
-This creates a `migrations` directory that tracks your database schema.
+3. **Add a Resource:**
+   - Select a floorplan from the dropdown
+   - Enter resource name and type
+   - Click on the floorplan image to set coordinates
+   - Click "Create Resource"
 
-### 3. Create Initial Migration
+4. **Edit a Resource:**
+   - Click "Edit" on any resource
+   - Update details and click on the floorplan to change position
+   - Click "Update Resource"
 
-```bash
-flask db migrate -m "Initial migration"
-```
-
-This generates a migration script based on your models.
-
-### 4. Apply Migration
-
-```bash
-flask db upgrade
-```
-
-This creates the database tables.
-
-### 5. Run the Application
-
-```bash
-python run.py
-```
-
-The application will be available at `http://localhost:5000`
-
-## Database Schema Changes
-
-When you modify your models (add/remove fields, create new models, etc.):
-
-```bash
-# Generate migration
-flask db migrate -m "Description of changes"
-
-# Apply migration
-flask db upgrade
-```
-
-Flask-Migrate automatically detects changes and generates the necessary migration scripts.
+5. **Delete:**
+   - Click "Delete" on any resource or floorplan
 
 ## API Endpoints
 
-### Search (Public)
+### Public Endpoints
 
-- `GET /api/search?q=<query>` - Search for a resource by name
-  - Returns the resource details and its floorplan information
-  - Returns 404 with friendly error message if not found
+#### Search
+```http
+GET /api/search?q=<query>
+```
+Returns all resources matching the query with their floorplan information.
 
-### Floorplans (Admin)
+**Response:**
+```json
+{
+  "count": 2,
+  "results": [
+    {
+      "resource": {
+        "id": 1,
+        "name": "Conference Room A",
+        "type": "room",
+        "x_coordinate": 150,
+        "y_coordinate": 100,
+        "floorplan_id": 1
+      },
+      "floorplan": {
+        "id": 1,
+        "name": "First Floor",
+        "image_filename": "floor1.png"
+      }
+    }
+  ]
+}
+```
 
+### Admin Endpoints (CSRF Protected)
+
+All POST/PUT/DELETE operations require a valid CSRF token.
+
+#### Floorplans
 - `GET /api/floorplans` - List all floorplans
-- `POST /api/floorplans` - Create a new floorplan
-  ```json
-  {
-    "name": "First Floor",
-    "image_filename": "floor1.png"
-  }
-  ```
+- `POST /api/floorplans` - Upload a new floorplan (multipart/form-data)
 - `GET /api/floorplans/<id>` - Get floorplan details
 - `PUT /api/floorplans/<id>` - Update floorplan
-- `DELETE /api/floorplans/<id>` - Delete floorplan
+- `DELETE /api/floorplans/<id>` - Delete floorplan (cascades to resources)
 
-### Resources (Admin)
-
+#### Resources
 - `GET /api/resources` - List all resources
 - `POST /api/resources` - Create a new resource
-  ```json
-  {
-    "name": "John Doe",
-    "type": "person",
-    "x_coordinate": 250,
-    "y_coordinate": 180,
-    "floorplan_id": 1
-  }
-  ```
 - `GET /api/resources/<id>` - Get resource details
 - `PUT /api/resources/<id>` - Update resource
 - `DELETE /api/resources/<id>` - Delete resource
 
-## Example Usage
-
-```bash
-# Create a floorplan
-curl -X POST http://localhost:5000/api/floorplans \
-  -H "Content-Type: application/json" \
-  -d '{"name": "First Floor", "image_filename": "floor1.png"}'
-
-# Add a resource (person)
-curl -X POST http://localhost:5000/api/resources \
-  -H "Content-Type: application/json" \
-  -d '{"name": "John Doe", "type": "person", "x_coordinate": 250, "y_coordinate": 180, "floorplan_id": 1}'
-
-# Add a resource (printer)
-curl -X POST http://localhost:5000/api/resources \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Color Printer", "type": "printer", "x_coordinate": 400, "y_coordinate": 300, "floorplan_id": 1}'
-
-# Search for a resource
-curl http://localhost:5000/api/search?q=John
-
-# List all floorplans
-curl http://localhost:5000/api/floorplans
-
-# List all resources
-curl http://localhost:5000/api/resources
-```
-
 ## Configuration
 
-The application can be configured in `app/__init__.py`:
+Edit `app/__init__.py` to configure:
 
-- `SQLALCHEMY_DATABASE_URI` - Database connection string (default: `sqlite:///app.db`)
-- `SECRET_KEY` - Secret key for sessions (change in production)
-- `SQLALCHEMY_TRACK_MODIFICATIONS` - Disable modification tracking for performance
+```python
+# Database
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 
-## Migration Management Commands
+# Security (change in production!)
+app.config['SECRET_KEY'] = 'dev-secret-key-change-in-production'
+
+# CSRF
+app.config['WTF_CSRF_TIME_LIMIT'] = None
+```
+
+## Database Management
+
+### Using uv (recommended)
 
 ```bash
-# Show current migration version
-flask db current
+# Create a new migration after model changes
+uv run flask db migrate -m "Description of changes"
 
-# Show migration history
-flask db history
+# Apply migrations
+uv run flask db upgrade
 
-# Rollback to previous version
-flask db downgrade
+# Rollback
+uv run flask db downgrade
 
-# Upgrade to specific version
-flask db upgrade <revision>
+# Show current version
+uv run flask db current
 ```
+
+### Using pip
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run migration commands
+flask db migrate -m "Description"
+flask db upgrade
+```
+
+## Security
+
+- **CSRF Protection**: All state-changing operations require valid CSRF tokens
+- **Secret Key**: Change `SECRET_KEY` in production
+- **File Uploads**: Validates file extensions for uploaded floorplans
+- **Secure Filenames**: Uses `secure_filename()` for uploaded files
+
+## Development
+
+See [CLAUDE.md](CLAUDE.md) for detailed developer documentation, including:
+- Application architecture
+- Database schema
+- Common commands
+- API endpoint details
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.txt](LICENSE.txt) file for details.
+
+## Acknowledgments
+
+- Built with Flask, SQLAlchemy, and Flask-WTF
+- UI inspired by modern web design patterns
+- Created to solve real office navigation challenges
+
+## Support
+
+If you encounter any issues or have questions:
+- Open an issue on GitHub
+- Check existing issues for solutions
+- Review the documentation in [CLAUDE.md](CLAUDE.md)
+
+---
+
+Made with ❤️ for small organizations everywhere

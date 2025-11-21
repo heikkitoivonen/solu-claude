@@ -30,19 +30,26 @@ def search():
     if not query:
         return jsonify({'error': 'Search query is required'}), 400
 
-    resource = Resource.query.filter(Resource.name.ilike(f'%{query}%')).first()
+    resources = Resource.query.filter(Resource.name.ilike(f'%{query}%')).all()
 
-    if not resource:
+    if not resources:
         return jsonify({
-            'error': f'Resource "{query}" not found',
+            'error': f'No resources matching "{query}" found',
             'message': 'Please try a different search term'
         }), 404
 
-    floorplan = Floorplan.query.get(resource.floorplan_id)
+    # Build results with floorplan info
+    results = []
+    for resource in resources:
+        floorplan = Floorplan.query.get(resource.floorplan_id)
+        results.append({
+            'resource': resource.to_dict(),
+            'floorplan': floorplan.to_dict() if floorplan else None
+        })
 
     return jsonify({
-        'resource': resource.to_dict(),
-        'floorplan': floorplan.to_dict() if floorplan else None
+        'count': len(results),
+        'results': results
     })
 
 

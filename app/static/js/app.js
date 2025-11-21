@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const searchButton = document.getElementById('searchButton');
     const errorMessage = document.getElementById('errorMessage');
+    const multipleResultsSection = document.getElementById('multipleResultsSection');
+    const resultsList = document.getElementById('resultsList');
     const resultsSection = document.getElementById('resultsSection');
     const resourceName = document.getElementById('resourceName');
     const resourceType = document.getElementById('resourceType');
@@ -30,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear previous results
         hideError();
         hideResults();
+        hideMultipleResults();
 
         // Perform API search
         fetch(`/api/search?q=${encodeURIComponent(query)}`)
@@ -42,14 +45,58 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
-                displayResults(data);
+                if (data.count === 1) {
+                    // Single result - show directly
+                    displaySingleResult(data.results[0]);
+                } else {
+                    // Multiple results - show selection
+                    displayMultipleResults(data);
+                }
             })
             .catch(error => {
                 showError(error.message || 'An error occurred while searching');
             });
     }
 
-    function displayResults(data) {
+    function displayMultipleResults(data) {
+        const count = data.count;
+        const results = data.results;
+
+        // Update count text
+        const countText = multipleResultsSection.querySelector('.results-count');
+        countText.textContent = `Found ${count} matching resource${count !== 1 ? 's' : ''}. Click on one to view its location:`;
+
+        // Build results list
+        resultsList.innerHTML = results.map((result, index) => {
+            const resource = result.resource;
+            const floorplan = result.floorplan;
+
+            return `
+                <div class="result-card" onclick="selectResult(${index})">
+                    <h3>${resource.name}</h3>
+                    <div class="result-meta">
+                        <span class="type">Type: ${resource.type}</span>
+                        <span>Location: ${floorplan ? floorplan.name : 'Unknown'}</span>
+                        <span>Coordinates: (${resource.x_coordinate}, ${resource.y_coordinate})</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Store results for later selection
+        window.searchResults = results;
+
+        // Show multiple results section
+        multipleResultsSection.classList.add('show');
+    }
+
+    window.selectResult = function(index) {
+        const result = window.searchResults[index];
+        hideMultipleResults();
+        displaySingleResult(result);
+    };
+
+    function displaySingleResult(data) {
         const resource = data.resource;
         const floorplan = data.floorplan;
 
@@ -101,5 +148,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function hideResults() {
         resultsSection.classList.remove('show');
         cursor.style.display = 'none';
+    }
+
+    function hideMultipleResults() {
+        multipleResultsSection.classList.remove('show');
     }
 });

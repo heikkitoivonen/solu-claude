@@ -99,6 +99,82 @@ header h1 {
     animation: fadeIn 0.3s ease;
 }
 
+.multiple-results-section {
+    display: none;
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.multiple-results-section.show {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+
+.multiple-results-section h2 {
+    color: #333;
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.results-count {
+    text-align: center;
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 1rem;
+}
+
+.results-list {
+    display: grid;
+    gap: 15px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.result-card {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.result-card:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.result-card h3 {
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 1.3rem;
+}
+
+.result-card .result-meta {
+    color: #666;
+    font-size: 0.95rem;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.result-card .result-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.result-card .result-meta .type {
+    text-transform: capitalize;
+    color: #667eea;
+    font-weight: 500;
+}
+
 .results-section {
     display: none;
     background: white;

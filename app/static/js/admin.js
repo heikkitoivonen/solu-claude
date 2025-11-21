@@ -16,6 +16,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const coordYDisplay = document.getElementById('coordY');
     const resourceXInput = document.getElementById('resourceX');
     const resourceYInput = document.getElementById('resourceY');
+    const editingResourceId = document.getElementById('editingResourceId');
+    const resourceFormTitle = document.getElementById('resourceFormTitle');
+    const resourceSubmitBtn = document.getElementById('resourceSubmitBtn');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
 
     // Initialize
     loadFloorplans();
@@ -24,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event Listeners
     floorplanForm.addEventListener('submit', handleFloorplanUpload);
     resourceForm.addEventListener('submit', handleResourceCreate);
+    cancelEditBtn.addEventListener('click', cancelEdit);
 
     // Load all floorplans
     function loadFloorplans() {
@@ -94,6 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <small>${res.type} | ${floorplan ? floorplan.name : 'Unknown'} | (${res.x_coordinate}, ${res.y_coordinate})</small>
                     </div>
                     <div class="list-item-actions">
+                        <button class="btn btn-edit" onclick="editResource(${res.id})">Edit</button>
                         <button class="btn btn-danger" onclick="deleteResource(${res.id})">Delete</button>
                     </div>
                 </div>
@@ -142,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // Handle resource creation
+    // Handle resource creation/update
     function handleResourceCreate(e) {
         e.preventDefault();
 
@@ -160,8 +166,13 @@ document.addEventListener('DOMContentLoaded', function() {
             floorplan_id: parseInt(formData.get('floorplan_id'))
         };
 
-        fetch('/api/resources', {
-            method: 'POST',
+        const resourceId = editingResourceId.value;
+        const isEditing = resourceId !== '';
+        const url = isEditing ? `/api/resources/${resourceId}` : '/api/resources';
+        const method = isEditing ? 'PUT' : 'POST';
+
+        fetch(url, {
+            method: method,
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -170,24 +181,63 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => {
                 if (!response.ok) {
                     return response.json().then(data => {
-                        throw new Error(data.error || 'Creation failed');
+                        throw new Error(data.error || (isEditing ? 'Update failed' : 'Creation failed'));
                     });
                 }
                 return response.json();
             })
             .then(data => {
-                showToast('Resource created successfully!', 'success');
-                resourceForm.reset();
-                clickCoordinates = { x: null, y: null };
-                coordXDisplay.textContent = '--';
-                coordYDisplay.textContent = '--';
-                resourceXInput.value = '';
-                resourceYInput.value = '';
+                showToast(isEditing ? 'Resource updated successfully!' : 'Resource created successfully!', 'success');
+                cancelEdit();
                 loadResources();
             })
             .catch(error => {
                 showToast(error.message, 'error');
             });
+    }
+
+    // Edit resource
+    window.editResource = function(resourceId) {
+        const resource = resources.find(r => r.id === resourceId);
+        if (!resource) return;
+
+        // Populate form
+        document.getElementById('resourceName').value = resource.name;
+        document.getElementById('resourceType').value = resource.type;
+        document.getElementById('resourceFloorplan').value = resource.floorplan_id;
+        editingResourceId.value = resourceId;
+
+        // Set coordinates
+        clickCoordinates = { x: resource.x_coordinate, y: resource.y_coordinate };
+        resourceXInput.value = resource.x_coordinate;
+        resourceYInput.value = resource.y_coordinate;
+        coordXDisplay.textContent = resource.x_coordinate;
+        coordYDisplay.textContent = resource.y_coordinate;
+
+        // Update UI
+        resourceFormTitle.textContent = 'Edit Resource';
+        resourceSubmitBtn.textContent = 'Update Resource';
+        cancelEditBtn.style.display = 'inline-block';
+
+        // Load the floorplan to show current position
+        viewFloorplan(resource.floorplan_id);
+
+        // Scroll to form
+        resourceForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    // Cancel edit mode
+    function cancelEdit() {
+        resourceForm.reset();
+        editingResourceId.value = '';
+        clickCoordinates = { x: null, y: null };
+        coordXDisplay.textContent = '--';
+        coordYDisplay.textContent = '--';
+        resourceXInput.value = '';
+        resourceYInput.value = '';
+        resourceFormTitle.textContent = 'Create Resource';
+        resourceSubmitBtn.textContent = 'Create Resource';
+        cancelEditBtn.style.display = 'none';
     }
 
     // View floorplan

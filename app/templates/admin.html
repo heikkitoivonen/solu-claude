@@ -43,7 +43,7 @@
 
                 <!-- Create Resource Section -->
                 <section class="card">
-                    <h2>Create Resource</h2>
+                    <h2 id="resourceFormTitle">Create Resource</h2>
                     <form id="resourceForm">
                         <div class="form-group">
                             <label for="resourceFloorplan">Select Floorplan</label>
@@ -75,7 +75,11 @@
                         </div>
                         <input type="hidden" id="resourceX" name="x_coordinate">
                         <input type="hidden" id="resourceY" name="y_coordinate">
-                        <button type="submit" class="btn btn-primary">Create Resource</button>
+                        <input type="hidden" id="editingResourceId" name="id">
+                        <div style="display: flex; gap: 10px;">
+                            <button type="submit" class="btn btn-primary" id="resourceSubmitBtn">Create Resource</button>
+                            <button type="button" class="btn btn-secondary" id="cancelEditBtn" style="display: none;">Cancel</button>
+                        </div>
                     </form>
                 </section>
 

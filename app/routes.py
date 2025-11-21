@@ -1,0 +1,116 @@
+from flask import Blueprint, jsonify, request
+from app import db
+from app.models import User, Floorplan, Resource
+
+main = Blueprint('main', __name__)
+
+
+@main.route('/')
+def index():
+    return jsonify({
+        'message': 'Welcome to the Office Resource Locator API',
+        'endpoints': {
+            'search': '/api/search?q=<query>',
+            'floorplans': '/api/floorplans',
+            'resources': '/api/resources'
+        }
+    })
+
+
+@main.route('/api/search', methods=['GET'])
+def search():
+    query = request.args.get('q', '').strip()
+
+    if not query:
+        return jsonify({'error': 'Search query is required'}), 400
+
+    resource = Resource.query.filter(Resource.name.ilike(f'%{query}%')).first()
+
+    if not resource:
+        return jsonify({
+            'error': f'Resource "{query}" not found',
+            'message': 'Please try a different search term'
+        }), 404
+
+    floorplan = Floorplan.query.get(resource.floorplan_id)
+
+    return jsonify({
+        'resource': resource.to_dict(),
+        'floorplan': floorplan.to_dict() if floorplan else None
+    })
+
+
+@main.route('/api/floorplans', methods=['GET', 'POST'])
+def floorplans():
+    if request.method == 'POST':
+        data = request.get_json()
+        floorplan = Floorplan(
+            name=data.get('name'),
+            image_filename=data.get('image_filename')
+        )
+        db.session.add(floorplan)
+        db.session.commit()
+        return jsonify(floorplan.to_dict()), 201
+
+    floorplans = Floorplan.query.all()
+    return jsonify([floorplan.to_dict() for floorplan in floorplans])
+
+
+@main.route('/api/floorplans/<int:floorplan_id>', methods=['GET', 'PUT', 'DELETE'])
+def floorplan_detail(floorplan_id):
+    floorplan = Floorplan.query.get_or_404(floorplan_id)
+
+    if request.method == 'DELETE':
+        db.session.delete(floorplan)
+        db.session.commit()
+        return '', 204
+
+    if request.method == 'PUT':
+        data = request.get_json()
+        floorplan.name = data.get('name', floorplan.name)
+        floorplan.image_filename = data.get('image_filename', floorplan.image_filename)
+        db.session.commit()
+        return jsonify(floorplan.to_dict())
+
+    return jsonify(floorplan.to_dict())
+
+
+@main.route('/api/resources', methods=['GET', 'POST'])
+def resources():
+    if request.method == 'POST':
+        data = request.get_json()
+        resource = Resource(
+            name=data.get('name'),
+            type=data.get('type'),
+            x_coordinate=data.get('x_coordinate'),
+            y_coordinate=data.get('y_coordinate'),
+            floorplan_id=data.get('floorplan_id')
+        )
+        db.session.add(resource)
+        db.session.commit()
+        return jsonify(resource.to_dict()), 201
+
+    resources = Resource.query.all()
+    return jsonify([resource.to_dict() for resource in resources])
+
+
+@main.route('/api/resources/<int:resource_id>', methods=['GET', 'PUT', 'DELETE'])
+def resource_detail(resource_id):
+    resource = Resource.query.get_or_404(resource_id)
+
+    if request.method == 'DELETE':
+        db.session.delete(resource)
+        db.session.commit()
+        return '', 204
+
+    if request.method == 'PUT':
+        data = request.get_json()
+        resource.name = data.get('name', resource.name)
+        resource.type = data.get('type', resource.type)
+        resource.x_coordinate = data.get('x_coordinate', resource.x_coordinate)
+        resource.y_coordinate = data.get('y_coordinate', resource.y_coordinate)
+        resource.floorplan_id = data.get('floorplan_id', resource.floorplan_id)
+        db.session.commit()
+        return jsonify(resource.to_dict())
+
+    return jsonify(resource.to_dict())

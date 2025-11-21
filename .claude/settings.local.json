@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(flask db:*)",
+      "Bash(uv init:*)",
+      "Bash(uv add:*)",
+      "Bash(uv sync:*)",
+      "Bash(uv run:*)",
+      "Bash(timeout 5 uv run:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

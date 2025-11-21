@@ -1,4 +1,18 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Get CSRF token from meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    // Helper function to get headers with CSRF token
+    function getHeaders(includeContentType = true) {
+        const headers = {
+            'X-CSRFToken': csrfToken
+        };
+        if (includeContentType) {
+            headers['Content-Type'] = 'application/json';
+        }
+        return headers;
+    }
+
     // State
     let currentFloorplan = null;
     let floorplans = [];
@@ -128,6 +142,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         fetch('/api/floorplans', {
             method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
             body: formData
         })
             .then(response => {
@@ -173,9 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         fetch(url, {
             method: method,
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getHeaders(),
             body: JSON.stringify(data)
         })
             .then(response => {
@@ -340,7 +355,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         fetch(`/api/floorplans/${floorplanId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getHeaders(false)
         })
             .then(response => {
                 if (response.ok) {
@@ -367,7 +383,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         fetch(`/api/resources/${resourceId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getHeaders(false)
         })
             .then(response => {
                 if (response.ok) {

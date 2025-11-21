@@ -1,0 +1,353 @@
+document.addEventListener('DOMContentLoaded', function() {
+    // State
+    let currentFloorplan = null;
+    let floorplans = [];
+    let resources = [];
+    let clickCoordinates = { x: null, y: null };
+
+    // DOM Elements
+    const floorplanForm = document.getElementById('floorplanForm');
+    const resourceForm = document.getElementById('resourceForm');
+    const floorplansList = document.getElementById('floorplansList');
+    const resourcesList = document.getElementById('resourcesList');
+    const floorplanViewer = document.getElementById('floorplanViewer');
+    const resourceFloorplanSelect = document.getElementById('resourceFloorplan');
+    const coordXDisplay = document.getElementById('coordX');
+    const coordYDisplay = document.getElementById('coordY');
+    const resourceXInput = document.getElementById('resourceX');
+    const resourceYInput = document.getElementById('resourceY');
+
+    // Initialize
+    loadFloorplans();
+    loadResources();
+
+    // Event Listeners
+    floorplanForm.addEventListener('submit', handleFloorplanUpload);
+    resourceForm.addEventListener('submit', handleResourceCreate);
+
+    // Load all floorplans
+    function loadFloorplans() {
+        fetch('/api/floorplans')
+            .then(response => response.json())
+            .then(data => {
+                floorplans = data;
+                renderFloorplansList();
+                populateFloorplanSelect();
+            })
+            .catch(error => {
+                showToast('Error loading floorplans', 'error');
+                console.error(error);
+            });
+    }
+
+    // Load all resources
+    function loadResources() {
+        fetch('/api/resources')
+            .then(response => response.json())
+            .then(data => {
+                resources = data;
+                renderResourcesList();
+                if (currentFloorplan) {
+                    renderFloorplanWithResources();
+                }
+            })
+            .catch(error => {
+                showToast('Error loading resources', 'error');
+                console.error(error);
+            });
+    }
+
+    // Render floorplans list
+    function renderFloorplansList() {
+        if (floorplans.length === 0) {
+            floorplansList.innerHTML = '<p class="loading">No floorplans yet</p>';
+            return;
+        }
+
+        floorplansList.innerHTML = floorplans.map(fp => `
+            <div class="list-item" data-id="${fp.id}">
+                <div class="list-item-info">
+                    <strong>${fp.name}</strong>
+                    <small>${fp.image_filename}</small>
+                </div>
+                <div class="list-item-actions">
+                    <button class="btn btn-edit" onclick="viewFloorplan(${fp.id})">View</button>
+                    <button class="btn btn-danger" onclick="deleteFloorplan(${fp.id})">Delete</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Render resources list
+    function renderResourcesList() {
+        if (resources.length === 0) {
+            resourcesList.innerHTML = '<p class="loading">No resources yet</p>';
+            return;
+        }
+
+        resourcesList.innerHTML = resources.map(res => {
+            const floorplan = floorplans.find(fp => fp.id === res.floorplan_id);
+            return `
+                <div class="list-item" data-id="${res.id}">
+                    <div class="list-item-info">
+                        <strong>${res.name}</strong>
+                        <small>${res.type} | ${floorplan ? floorplan.name : 'Unknown'} | (${res.x_coordinate}, ${res.y_coordinate})</small>
+                    </div>
+                    <div class="list-item-actions">
+                        <button class="btn btn-danger" onclick="deleteResource(${res.id})">Delete</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Populate floorplan select dropdown
+    function populateFloorplanSelect() {
+        const options = floorplans.map(fp =>
+            `<option value="${fp.id}">${fp.name}</option>`
+        ).join('');
+        resourceFloorplanSelect.innerHTML = '<option value="">-- Select a floorplan --</option>' + options;
+
+        // Auto-select current floorplan if viewing one
+        if (currentFloorplan) {
+            resourceFloorplanSelect.value = currentFloorplan.id;
+        }
+    }
+
+    // Handle floorplan upload
+    function handleFloorplanUpload(e) {
+        e.preventDefault();
+
+        const formData = new FormData(floorplanForm);
+
+        fetch('/api/floorplans', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Upload failed');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                showToast('Floorplan uploaded successfully!', 'success');
+                floorplanForm.reset();
+                loadFloorplans();
+            })
+            .catch(error => {
+                showToast(error.message, 'error');
+            });
+    }
+
+    // Handle resource creation
+    function handleResourceCreate(e) {
+        e.preventDefault();
+
+        if (!clickCoordinates.x || !clickCoordinates.y) {
+            showToast('Please click on the floorplan to set coordinates', 'error');
+            return;
+        }
+
+        const formData = new FormData(resourceForm);
+        const data = {
+            name: formData.get('name'),
+            type: formData.get('type'),
+            x_coordinate: clickCoordinates.x,
+            y_coordinate: clickCoordinates.y,
+            floorplan_id: parseInt(formData.get('floorplan_id'))
+        };
+
+        fetch('/api/resources', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Creation failed');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                showToast('Resource created successfully!', 'success');
+                resourceForm.reset();
+                clickCoordinates = { x: null, y: null };
+                coordXDisplay.textContent = '--';
+                coordYDisplay.textContent = '--';
+                resourceXInput.value = '';
+                resourceYInput.value = '';
+                loadResources();
+            })
+            .catch(error => {
+                showToast(error.message, 'error');
+            });
+    }
+
+    // View floorplan
+    window.viewFloorplan = function(floorplanId) {
+        currentFloorplan = floorplans.find(fp => fp.id === floorplanId);
+        if (!currentFloorplan) return;
+
+        resourceFloorplanSelect.value = floorplanId;
+        renderFloorplanWithResources();
+    };
+
+    // Render floorplan with resources
+    function renderFloorplanWithResources() {
+        if (!currentFloorplan) return;
+
+        const floorplanResources = resources.filter(r => r.floorplan_id === currentFloorplan.id);
+
+        floorplanViewer.innerHTML = `
+            <h3 style="margin-bottom: 15px; color: #555;">${currentFloorplan.name}</h3>
+            <div class="floorplan-image-container" id="floorplanContainer">
+                <img src="/static/floorplans/${currentFloorplan.image_filename}"
+                     alt="${currentFloorplan.name}"
+                     id="floorplanImg"
+                     style="display: block;">
+                ${floorplanResources.map(res => `
+                    <div class="resource-marker"
+                         style="left: ${res.x_coordinate}px; top: ${res.y_coordinate}px;"
+                         title="${res.name} (${res.type})"
+                         data-resource-id="${res.id}">
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        // Wait for image to load, then add click handler
+        const img = document.getElementById('floorplanImg');
+        const container = document.getElementById('floorplanContainer');
+
+        // Remove any existing click handlers to avoid duplicates
+        const newContainer = container.cloneNode(true);
+        container.parentNode.replaceChild(newContainer, container);
+
+        const finalImg = document.getElementById('floorplanImg');
+        const finalContainer = document.getElementById('floorplanContainer');
+
+        // Add click handler after image loads
+        if (finalImg.complete) {
+            setupClickHandler(finalContainer, finalImg);
+        } else {
+            finalImg.onload = function() {
+                setupClickHandler(finalContainer, finalImg);
+            };
+        }
+    }
+
+    // Setup click handler for floorplan
+    function setupClickHandler(container, img) {
+        container.addEventListener('click', function(e) {
+            // Don't process clicks on markers
+            if (e.target.classList.contains('resource-marker')) {
+                return;
+            }
+
+            // Get the image bounds
+            const rect = img.getBoundingClientRect();
+            const x = Math.round(e.clientX - rect.left);
+            const y = Math.round(e.clientY - rect.top);
+
+            // Make sure click is within image bounds
+            if (x < 0 || y < 0 || x > img.width || y > img.height) {
+                return;
+            }
+
+            clickCoordinates = { x, y };
+            resourceXInput.value = x;
+            resourceYInput.value = y;
+            coordXDisplay.textContent = x;
+            coordYDisplay.textContent = y;
+
+            // Show temporary marker
+            const existingTemp = container.querySelector('.temp-marker');
+            if (existingTemp) {
+                existingTemp.remove();
+            }
+
+            const tempMarker = document.createElement('div');
+            tempMarker.className = 'temp-marker';
+            tempMarker.style.left = `${x}px`;
+            tempMarker.style.top = `${y}px`;
+            container.appendChild(tempMarker);
+
+            showToast(`Coordinates set: (${x}, ${y})`, 'success');
+        });
+    }
+
+    // Delete floorplan
+    window.deleteFloorplan = function(floorplanId) {
+        if (!confirm('Are you sure you want to delete this floorplan? All associated resources will also be deleted.')) {
+            return;
+        }
+
+        fetch(`/api/floorplans/${floorplanId}`, {
+            method: 'DELETE'
+        })
+            .then(response => {
+                if (response.ok) {
+                    showToast('Floorplan deleted successfully!', 'success');
+                    if (currentFloorplan && currentFloorplan.id === floorplanId) {
+                        currentFloorplan = null;
+                        floorplanViewer.innerHTML = '<p class="placeholder">Select a floorplan to view and place resources</p>';
+                    }
+                    loadFloorplans();
+                    loadResources();
+                } else {
+                    throw new Error('Delete failed');
+                }
+            })
+            .catch(error => {
+                showToast('Error deleting floorplan', 'error');
+            });
+    };
+
+    // Delete resource
+    window.deleteResource = function(resourceId) {
+        if (!confirm('Are you sure you want to delete this resource?')) {
+            return;
+        }
+
+        fetch(`/api/resources/${resourceId}`, {
+            method: 'DELETE'
+        })
+            .then(response => {
+                if (response.ok) {
+                    showToast('Resource deleted successfully!', 'success');
+                    loadResources();
+                } else {
+                    throw new Error('Delete failed');
+                }
+            })
+            .catch(error => {
+                showToast('Error deleting resource', 'error');
+            });
+    };
+
+    // Show toast notification
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = `toast ${type} show`;
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    // Auto-load floorplan when selecting in resource form
+    resourceFloorplanSelect.addEventListener('change', function() {
+        const floorplanId = parseInt(this.value);
+        if (floorplanId) {
+            viewFloorplan(floorplanId);
+        }
+    });
+});

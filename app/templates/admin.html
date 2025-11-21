@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Office Resource Locator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Admin Panel</h1>
+            <p class="subtitle">Manage floorplans and resources</p>
+            <a href="/" class="home-link">Back to Search</a>
+        </header>
+
+        <div class="admin-content">
+            <!-- Left Panel: Forms and Lists -->
+            <div class="left-panel">
+                <!-- Upload Floorplan Section -->
+                <section class="card">
+                    <h2>Upload Floorplan</h2>
+                    <form id="floorplanForm" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="floorplanName">Floorplan Name</label>
+                            <input type="text" id="floorplanName" name="name" required placeholder="e.g., First Floor">
+                        </div>
+                        <div class="form-group">
+                            <label for="floorplanImage">Floorplan Image</label>
+                            <input type="file" id="floorplanImage" name="image" accept="image/*" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Upload Floorplan</button>
+                    </form>
+                </section>
+
+                <!-- Floorplans List -->
+                <section class="card">
+                    <h2>Floorplans</h2>
+                    <div id="floorplansList" class="list-container">
+                        <p class="loading">Loading floorplans...</p>
+                    </div>
+                </section>
+
+                <!-- Create Resource Section -->
+                <section class="card">
+                    <h2>Create Resource</h2>
+                    <form id="resourceForm">
+                        <div class="form-group">
+                            <label for="resourceFloorplan">Select Floorplan</label>
+                            <select id="resourceFloorplan" name="floorplan_id" required>
+                                <option value="">-- Select a floorplan --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="resourceName">Resource Name</label>
+                            <input type="text" id="resourceName" name="name" required placeholder="e.g., Conference Room A">
+                        </div>
+                        <div class="form-group">
+                            <label for="resourceType">Resource Type</label>
+                            <select id="resourceType" name="type" required>
+                                <option value="room">Room</option>
+                                <option value="printer">Printer</option>
+                                <option value="person">Person</option>
+                                <option value="kitchen">Kitchen</option>
+                                <option value="bathroom">Bathroom</option>
+                                <option value="equipment">Equipment</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="coordinates-info">
+                            <p>Click on the floorplan to set coordinates</p>
+                            <div class="coords-display">
+                                X: <span id="coordX">--</span>, Y: <span id="coordY">--</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="resourceX" name="x_coordinate">
+                        <input type="hidden" id="resourceY" name="y_coordinate">
+                        <button type="submit" class="btn btn-primary">Create Resource</button>
+                    </form>
+                </section>
+
+                <!-- Resources List -->
+                <section class="card">
+                    <h2>Resources</h2>
+                    <div id="resourcesList" class="list-container">
+                        <p class="loading">Loading resources...</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Panel: Floorplan Viewer -->
+            <div class="right-panel">
+                <section class="card">
+                    <h2>Floorplan Viewer</h2>
+                    <div id="floorplanViewer" class="floorplan-viewer">
+                        <p class="placeholder">Select a floorplan to view and place resources</p>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Success/Error Messages -->
+        <div id="toast" class="toast"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>

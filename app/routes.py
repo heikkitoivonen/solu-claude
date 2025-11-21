@@ -1,20 +1,26 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, render_template
+from werkzeug.utils import secure_filename
+import os
 from app import db
 from app.models import User, Floorplan, Resource
 
 main = Blueprint('main', __name__)
 
+UPLOAD_FOLDER = 'app/static/floorplans'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @main.route('/')
 def index():
-    return jsonify({
-        'message': 'Welcome to the Office Resource Locator API',
-        'endpoints': {
-            'search': '/api/search?q=<query>',
-            'floorplans': '/api/floorplans',
-            'resources': '/api/resources'
-        }
-    })
+    return render_template('index.html')
+
+
+@main.route('/admin')
+def admin():
+    return render_template('admin.html')
 
 
 @main.route('/api/search', methods=['GET'])
@@ -43,14 +49,48 @@ def search():
 @main.route('/api/floorplans', methods=['GET', 'POST'])
 def floorplans():
     if request.method == 'POST':
-        data = request.get_json()
-        floorplan = Floorplan(
-            name=data.get('name'),
-            image_filename=data.get('image_filename')
-        )
-        db.session.add(floorplan)
-        db.session.commit()
-        return jsonify(floorplan.to_dict()), 201
+        # Handle file upload
+        if 'image' in request.files:
+            file = request.files['image']
+            name = request.form.get('name')
+
+            if not name:
+                return jsonify({'error': 'Floorplan name is required'}), 400
+
+            if file.filename == '':
+                return jsonify({'error': 'No file selected'}), 400
+
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                # Add timestamp to filename to avoid conflicts
+                import time
+                filename = f"{int(time.time())}_{filename}"
+
+                # Ensure upload folder exists
+                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+                filepath = os.path.join(UPLOAD_FOLDER, filename)
+                file.save(filepath)
+
+                floorplan = Floorplan(
+                    name=name,
+                    image_filename=filename
+                )
+                db.session.add(floorplan)
+                db.session.commit()
+                return jsonify(floorplan.to_dict()), 201
+            else:
+                return jsonify({'error': 'Invalid file type. Allowed: png, jpg, jpeg, gif, svg'}), 400
+        else:
+            # JSON-based creation (for backwards compatibility)
+            data = request.get_json()
+            floorplan = Floorplan(
+                name=data.get('name'),
+                image_filename=data.get('image_filename')
+            )
+            db.session.add(floorplan)
+            db.session.commit()
+            return jsonify(floorplan.to_dict()), 201
 
     floorplans = Floorplan.query.all()
     return jsonify([floorplan.to_dict() for floorplan in floorplans])

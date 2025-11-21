@@ -1,0 +1,44 @@
+<svg width="600" height="400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="600" height="400" fill="#f0f0f0"/>
+
+  <!-- Grid lines -->
+  <defs>
+    <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+      <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#ddd" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="600" height="400" fill="url(#grid)"/>
+
+  <!-- Conference Rooms -->
+  <rect x="100" y="50" width="100" height="100" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+  <text x="150" y="105" text-anchor="middle" font-family="Arial" font-size="12" fill="#333">Conf A</text>
+
+  <rect x="300" y="50" width="100" height="100" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+  <text x="350" y="105" text-anchor="middle" font-family="Arial" font-size="12" fill="#333">Conf B</text>
+
+  <!-- Kitchen -->
+  <rect x="450" y="100" width="100" height="100" fill="#fff3e0" stroke="#f57c00" stroke-width="2"/>
+  <text x="500" y="155" text-anchor="middle" font-family="Arial" font-size="12" fill="#333">Kitchen</text>
+
+  <!-- Printers -->
+  <circle cx="200" cy="250" r="20" fill="#c8e6c9" stroke="#388e3c" stroke-width="2"/>
+  <text x="200" y="255" text-anchor="middle" font-family="Arial" font-size="10" fill="#333">P1</text>
+
+  <circle cx="400" cy="250" r="20" fill="#c8e6c9" stroke="#388e3c" stroke-width="2"/>
+  <text x="400" y="255" text-anchor="middle" font-family="Arial" font-size="10" fill="#333">P2</text>
+
+  <!-- Desks/People -->
+  <rect x="80" y="320" width="40" height="60" fill="#fce4ec" stroke="#c2185b" stroke-width="2"/>
+  <text x="100" y="355" text-anchor="middle" font-family="Arial" font-size="9" fill="#333">John</text>
+
+  <rect x="280" y="320" width="40" height="60" fill="#fce4ec" stroke="#c2185b" stroke-width="2"/>
+  <text x="300" y="355" text-anchor="middle" font-family="Arial" font-size="9" fill="#333">Jane</text>
+
+  <!-- Break Room -->
+  <rect x="400" y="320" width="100" height="60" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="2"/>
+  <text x="450" y="355" text-anchor="middle" font-family="Arial" font-size="11" fill="#333">Break Room</text>
+
+  <!-- Title -->
+  <text x="300" y="25" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#333">First Floor - Office Layout</text>
+</svg>

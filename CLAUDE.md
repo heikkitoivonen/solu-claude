@@ -41,37 +41,51 @@ All models should include `to_dict()` methods for JSON serialization.
 
 ## Common Commands
 
+**Note**: This project uses `uv` for dependency management. Do NOT use `pip` - use `uv` commands instead.
+
 ### Running the Application
 ```bash
-python run.py
+uv run python run.py
 ```
-Application runs on `http://localhost:5000` with debug mode enabled.
+Application runs on `http://localhost:8000` with debug mode enabled.
+
+### Managing Dependencies
+
+**Sync dependencies** (install all dependencies from lockfile):
+```bash
+uv sync
+```
+
+**Add a new dependency**:
+```bash
+uv add <package-name>
+```
+
+**Run any Python command** (automatically uses virtual environment):
+```bash
+uv run <command>
+```
 
 ### Database Migrations
 
 **Initial setup** (only once):
 ```bash
-flask db init
-flask db migrate -m "Initial migration"
-flask db upgrade
+uv run flask db init
+uv run flask db migrate -m "Initial migration"
+uv run flask db upgrade
 ```
 
 **After modifying models**:
 ```bash
-flask db migrate -m "Description of changes"
-flask db upgrade
+uv run flask db migrate -m "Description of changes"
+uv run flask db upgrade
 ```
 
 **Other migration commands**:
 ```bash
-flask db current    # Show current version
-flask db history    # Show all migrations
-flask db downgrade  # Rollback one version
-```
-
-### Installing Dependencies
-```bash
-pip install -r requirements.txt
+uv run flask db current    # Show current version
+uv run flask db history    # Show all migrations
+uv run flask db downgrade  # Rollback one version
 ```
 
 ## API Endpoints

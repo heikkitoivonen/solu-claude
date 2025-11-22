@@ -66,6 +66,20 @@ uv add <package-name>
 uv run <command>
 ```
 
+**IMPORTANT: Maintaining pip requirements files**
+
+After adding or updating dependencies in `pyproject.toml`, you MUST regenerate the requirements files for pip users:
+
+```bash
+# Regenerate production requirements
+uv pip compile pyproject.toml -o requirements.txt
+
+# Regenerate dev requirements (includes testing, linting, etc.)
+uv pip compile pyproject.toml --group dev -o requirements-dev.txt
+```
+
+This ensures pip users have up-to-date, pinned dependencies that match the uv lockfile. The requirements files include dependency trees showing why each package is installed, which aids in troubleshooting and security audits.
+
 ### Database Migrations
 
 **Initial setup** (only once):

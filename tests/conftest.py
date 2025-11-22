@@ -1,9 +1,12 @@
 """
 Pytest configuration and fixtures for testing.
 """
-import pytest
-import tempfile
+
 import os
+import tempfile
+
+import pytest
+
 from app import create_app, db
 from app.models import Floorplan, Resource
 
@@ -14,10 +17,10 @@ def app():
     db_fd, db_path = tempfile.mkstemp()
 
     config = {
-        'SQLALCHEMY_DATABASE_URI': f'sqlite:///{db_path}',
-        'TESTING': True,
-        'WTF_CSRF_ENABLED': False,  # Disable CSRF for testing
-        'SECRET_KEY': 'test-secret-key'
+        "SQLALCHEMY_DATABASE_URI": f"sqlite:///{db_path}",
+        "TESTING": True,
+        "WTF_CSRF_ENABLED": False,  # Disable CSRF for testing
+        "SECRET_KEY": "test-secret-key",
     }
 
     app = create_app(config)
@@ -48,10 +51,7 @@ def runner(app):
 def sample_floorplan(app):
     """Create a sample floorplan for testing."""
     with app.app_context():
-        floorplan = Floorplan(
-            name='Test Floor',
-            image_filename='test_floor.png'
-        )
+        floorplan = Floorplan(name="Test Floor", image_filename="test_floor.png")
         db.session.add(floorplan)
         db.session.commit()
         floorplan_id = floorplan.id
@@ -69,11 +69,11 @@ def sample_resource(app, sample_floorplan):
     """Create a sample resource for testing."""
     with app.app_context():
         resource = Resource(
-            name='Test Room',
-            type='room',
+            name="Test Room",
+            type="room",
             x_coordinate=100,
             y_coordinate=200,
-            floorplan_id=sample_floorplan.id
+            floorplan_id=sample_floorplan.id,
         )
         db.session.add(resource)
         db.session.commit()
@@ -94,25 +94,25 @@ def multiple_resources(app, sample_floorplan):
     with app.app_context():
         resources = [
             Resource(
-                name='Conference Room A',
-                type='room',
+                name="Conference Room A",
+                type="room",
                 x_coordinate=150,
                 y_coordinate=100,
-                floorplan_id=sample_floorplan.id
+                floorplan_id=sample_floorplan.id,
             ),
             Resource(
-                name='Conference Room B',
-                type='room',
+                name="Conference Room B",
+                type="room",
                 x_coordinate=350,
                 y_coordinate=100,
-                floorplan_id=sample_floorplan.id
+                floorplan_id=sample_floorplan.id,
             ),
             Resource(
-                name='Printer 1',
-                type='printer',
+                name="Printer 1",
+                type="printer",
                 x_coordinate=200,
                 y_coordinate=250,
-                floorplan_id=sample_floorplan.id
+                floorplan_id=sample_floorplan.id,
             ),
         ]
         for resource in resources:

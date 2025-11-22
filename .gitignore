@@ -46,4 +46,14 @@ instance/
 # Environment
 .env
 .env.local
+
+# Testing
 /.pytest_cache/
+.coverage
+htmlcov/
+
+# Linting and type checking
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+dmypy.json

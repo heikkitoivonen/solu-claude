@@ -301,6 +301,54 @@ def test_search_resource(client, sample_resource):
     assert data['count'] == 1
 ```
 
+## Code Quality and Linting
+
+The project uses modern Python linting and formatting tools to maintain code quality.
+
+### Tools
+
+- **Ruff**: Fast Python linter (replaces flake8, pylint, isort, and more)
+- **Black**: Opinionated code formatter for consistent style
+- **Mypy**: Static type checker for catching type-related bugs
+
+### Running Linters
+
+```bash
+# Lint code with ruff
+uv run ruff check app/ tests/ run.py
+
+# Auto-fix linting issues
+uv run ruff check --fix app/ tests/ run.py
+
+# Format code with black
+uv run black app/ tests/ run.py
+
+# Check formatting without changes
+uv run black --check app/ tests/ run.py
+
+# Type check with mypy
+uv run mypy app/
+
+# Run all checks together
+uv run ruff check app/ tests/ run.py && uv run black --check app/ tests/ run.py && uv run mypy app/
+```
+
+### Configuration
+
+All linting tools are configured in `pyproject.toml`:
+- **Line length**: 100 characters
+- **Target Python version**: 3.14
+- **Ruff rules**: pycodestyle, pyflakes, isort, bugbear, comprehensions, pyupgrade
+- **Mypy**: Configured for gradual typing with Flask extension support
+
+### Pre-commit Workflow
+
+Before committing code:
+1. Run `uv run ruff check --fix app/ tests/ run.py` to fix linting issues
+2. Run `uv run black app/ tests/ run.py` to format code
+3. Run `uv run pytest` to ensure tests pass
+4. Commit your changes
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.

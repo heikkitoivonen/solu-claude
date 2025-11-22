@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from app import db
 
 
@@ -11,15 +12,15 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f'<User {self.username}>'
+        return f"<User {self.username}>"
 
     def to_dict(self):
         return {
-            'id': self.id,
-            'username': self.username,
-            'email': self.email,
-            'is_admin': self.is_admin,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "is_admin": self.is_admin,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
 
@@ -28,17 +29,19 @@ class Floorplan(db.Model):
     name = db.Column(db.String(200), nullable=False)
     image_filename = db.Column(db.String(500), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    resources = db.relationship('Resource', backref='floorplan', lazy=True, cascade='all, delete-orphan')
+    resources = db.relationship(
+        "Resource", backref="floorplan", lazy=True, cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
-        return f'<Floorplan {self.name}>'
+        return f"<Floorplan {self.name}>"
 
     def to_dict(self):
         return {
-            'id': self.id,
-            'name': self.name,
-            'image_filename': self.image_filename,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            "id": self.id,
+            "name": self.name,
+            "image_filename": self.image_filename,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
 
@@ -48,19 +51,19 @@ class Resource(db.Model):
     type = db.Column(db.String(50), nullable=False)
     x_coordinate = db.Column(db.Integer, nullable=False)
     y_coordinate = db.Column(db.Integer, nullable=False)
-    floorplan_id = db.Column(db.Integer, db.ForeignKey('floorplan.id'), nullable=False)
+    floorplan_id = db.Column(db.Integer, db.ForeignKey("floorplan.id"), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f'<Resource {self.name} ({self.type})>'
+        return f"<Resource {self.name} ({self.type})>"
 
     def to_dict(self):
         return {
-            'id': self.id,
-            'name': self.name,
-            'type': self.type,
-            'x_coordinate': self.x_coordinate,
-            'y_coordinate': self.y_coordinate,
-            'floorplan_id': self.floorplan_id,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            "id": self.id,
+            "name": self.name,
+            "type": self.type,
+            "x_coordinate": self.x_coordinate,
+            "y_coordinate": self.y_coordinate,
+            "floorplan_id": self.floorplan_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }

@@ -114,6 +114,36 @@ def test_something(app, sample_floorplan):
         # Now work with the floorplan object
 ```
 
+### Linting and Code Quality
+
+**Run linters**:
+```bash
+# Check code with ruff (linter)
+uv run ruff check app/ tests/ run.py
+
+# Auto-fix ruff issues
+uv run ruff check --fix app/ tests/ run.py
+
+# Format code with black
+uv run black app/ tests/ run.py
+
+# Check code formatting without changing files
+uv run black --check app/ tests/ run.py
+
+# Type check with mypy
+uv run mypy app/ tests/ run.py
+
+# Run all checks
+uv run ruff check app/ tests/ run.py && uv run black --check app/ tests/ run.py && uv run mypy app/
+```
+
+**Linting tools**:
+- **Ruff**: Fast Python linter (replaces flake8, isort, and more)
+- **Black**: Opinionated code formatter
+- **Mypy**: Static type checker
+
+**Configuration**: All linting tools are configured in `pyproject.toml`
+
 ## API Endpoints
 
 All endpoints are RESTful and return JSON.

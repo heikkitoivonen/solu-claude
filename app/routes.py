@@ -1,6 +1,6 @@
 import os
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, Response, jsonify, render_template, request
 from werkzeug.utils import secure_filename
 
 from app import db
@@ -12,22 +12,22 @@ UPLOAD_FOLDER = "app/static/floorplans"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "svg"}
 
 
-def allowed_file(filename):
+def allowed_file(filename: str) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 @main.route("/")
-def index():
+def index() -> str:
     return render_template("index.html")
 
 
 @main.route("/admin")
-def admin():
+def admin() -> str:
     return render_template("admin.html")
 
 
 @main.route("/api/search", methods=["GET"])
-def search():
+def search() -> Response | tuple[Response, int]:
     query = request.args.get("q", "").strip()
 
     if not query:
@@ -61,7 +61,7 @@ def search():
 
 
 @main.route("/api/floorplans", methods=["GET", "POST"])
-def floorplans():
+def floorplans() -> Response | tuple[Response, int]:
     if request.method == "POST":
         # Handle file upload
         if "image" in request.files:
@@ -74,7 +74,7 @@ def floorplans():
             if file.filename == "":
                 return jsonify({"error": "No file selected"}), 400
 
-            if file and allowed_file(file.filename):
+            if file and file.filename and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 # Add timestamp to filename to avoid conflicts
                 import time
@@ -109,7 +109,7 @@ def floorplans():
 
 
 @main.route("/api/floorplans/<int:floorplan_id>", methods=["GET", "PUT", "DELETE"])
-def floorplan_detail(floorplan_id):
+def floorplan_detail(floorplan_id: int) -> Response | tuple[str, int]:
     floorplan = Floorplan.query.get_or_404(floorplan_id)
 
     if request.method == "DELETE":
@@ -128,7 +128,7 @@ def floorplan_detail(floorplan_id):
 
 
 @main.route("/api/resources", methods=["GET", "POST"])
-def resources():
+def resources() -> Response | tuple[Response, int]:
     if request.method == "POST":
         data = request.get_json()
         resource = Resource(
@@ -147,7 +147,7 @@ def resources():
 
 
 @main.route("/api/resources/<int:resource_id>", methods=["GET", "PUT", "DELETE"])
-def resource_detail(resource_id):
+def resource_detail(resource_id: int) -> Response | tuple[str, int]:
     resource = Resource.query.get_or_404(resource_id)
 
     if request.method == "DELETE":

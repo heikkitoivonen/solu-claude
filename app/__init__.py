@@ -1,3 +1,5 @@
+from typing import Any
+
 from flask import Flask
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -8,7 +10,7 @@ migrate = Migrate()
 csrf = CSRFProtect()
 
 
-def create_app(config=None):
+def create_app(config: dict[str, Any] | None = None) -> Flask:
     app = Flask(__name__)
 
     # Default configuration

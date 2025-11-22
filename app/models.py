@@ -1,9 +1,10 @@
 from datetime import datetime
+from typing import Any
 
 from app import db
 
 
-class User(db.Model):
+class User(db.Model):  # type: ignore[name-defined]
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -11,10 +12,10 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<User {self.username}>"
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "username": self.username,
@@ -24,7 +25,7 @@ class User(db.Model):
         }
 
 
-class Floorplan(db.Model):
+class Floorplan(db.Model):  # type: ignore[name-defined]
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     image_filename = db.Column(db.String(500), nullable=False)
@@ -33,10 +34,10 @@ class Floorplan(db.Model):
         "Resource", backref="floorplan", lazy=True, cascade="all, delete-orphan"
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Floorplan {self.name}>"
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "name": self.name,
@@ -45,7 +46,7 @@ class Floorplan(db.Model):
         }
 
 
-class Resource(db.Model):
+class Resource(db.Model):  # type: ignore[name-defined]
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     type = db.Column(db.String(50), nullable=False)
@@ -54,10 +55,10 @@ class Resource(db.Model):
     floorplan_id = db.Column(db.Integer, db.ForeignKey("floorplan.id"), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Resource {self.name} ({self.type})>"
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "name": self.name,

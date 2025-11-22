@@ -141,8 +141,11 @@ uv run ruff check app/ tests/ run.py && uv run black --check app/ tests/ run.py 
 - **Ruff**: Fast Python linter (replaces flake8, isort, and more)
 - **Black**: Opinionated code formatter
 - **Mypy**: Static type checker
+- **Type Hints**: All function definitions include type annotations
 
 **Configuration**: All linting tools are configured in `pyproject.toml`
+
+**Type Hints**: The codebase uses comprehensive type hints on all function definitions. When adding new functions, always include parameter and return type annotations.
 
 ## API Endpoints
 

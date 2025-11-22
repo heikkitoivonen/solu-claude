@@ -303,13 +303,14 @@ def test_search_resource(client, sample_resource):
 
 ## Code Quality and Linting
 
-The project uses modern Python linting and formatting tools to maintain code quality.
+The project uses modern Python linting and formatting tools to maintain code quality. All function definitions include type hints for improved code clarity and type safety.
 
 ### Tools
 
 - **Ruff**: Fast Python linter (replaces flake8, pylint, isort, and more)
 - **Black**: Opinionated code formatter for consistent style
 - **Mypy**: Static type checker for catching type-related bugs
+- **Type Hints**: Comprehensive type annotations on all function definitions
 
 ### Running Linters
 

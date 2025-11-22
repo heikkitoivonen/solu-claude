@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
     floorplanForm.addEventListener('submit', handleFloorplanUpload);
     resourceForm.addEventListener('submit', handleResourceCreate);
     cancelEditBtn.addEventListener('click', cancelEdit);
+    document.getElementById('resourceType').addEventListener('change', handleResourceTypeChange);
 
     // Load all floorplans
     function loadFloorplans() {
@@ -165,6 +166,27 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
+    // Handle resource type change to show/hide metadata fields
+    function handleResourceTypeChange(e) {
+        const resourceType = e.target.value;
+
+        // Hide all metadata fields
+        document.querySelectorAll('.metadata-fields').forEach(el => {
+            el.style.display = 'none';
+        });
+
+        // Show relevant metadata fields based on type
+        if (resourceType === 'room') {
+            document.getElementById('roomFields').style.display = 'block';
+        } else if (resourceType === 'printer') {
+            document.getElementById('printerFields').style.display = 'block';
+        } else if (resourceType === 'person') {
+            document.getElementById('personFields').style.display = 'block';
+        } else if (resourceType === 'bathroom') {
+            document.getElementById('bathroomFields').style.display = 'block';
+        }
+    }
+
     // Handle resource creation/update
     function handleResourceCreate(e) {
         e.preventDefault();
@@ -175,13 +197,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const formData = new FormData(resourceForm);
+        const resourceType = formData.get('type');
         const data = {
             name: formData.get('name'),
-            type: formData.get('type'),
+            type: resourceType,
             x_coordinate: clickCoordinates.x,
             y_coordinate: clickCoordinates.y,
             floorplan_id: parseInt(formData.get('floorplan_id'))
         };
+
+        // Add type-specific metadata
+        if (resourceType === 'room') {
+            data.room_number = formData.get('room_number');
+            data.room_type = formData.get('room_type');
+            const capacity = formData.get('capacity');
+            data.capacity = capacity ? parseInt(capacity) : null;
+        } else if (resourceType === 'printer') {
+            data.printer_name = formData.get('printer_name');
+            data.color_type = formData.get('color_type');
+            data.printer_model = formData.get('printer_model');
+        } else if (resourceType === 'person') {
+            data.email = formData.get('email');
+            data.title = formData.get('title');
+        } else if (resourceType === 'bathroom') {
+            data.gender_type = formData.get('gender_type');
+        }
 
         const resourceId = editingResourceId.value;
         const isEditing = resourceId !== '';
@@ -221,6 +261,25 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('resourceType').value = resource.type;
         document.getElementById('resourceFloorplan').value = resource.floorplan_id;
         editingResourceId.value = resourceId;
+
+        // Show appropriate metadata fields and populate them
+        handleResourceTypeChange({ target: { value: resource.type } });
+
+        // Populate type-specific metadata
+        if (resource.type === 'room') {
+            if (resource.room_number) document.getElementById('roomNumber').value = resource.room_number;
+            if (resource.room_type) document.getElementById('roomType').value = resource.room_type;
+            if (resource.capacity) document.getElementById('capacity').value = resource.capacity;
+        } else if (resource.type === 'printer') {
+            if (resource.printer_name) document.getElementById('printerName').value = resource.printer_name;
+            if (resource.color_type) document.getElementById('colorType').value = resource.color_type;
+            if (resource.printer_model) document.getElementById('printerModel').value = resource.printer_model;
+        } else if (resource.type === 'person') {
+            if (resource.email) document.getElementById('email').value = resource.email;
+            if (resource.title) document.getElementById('title').value = resource.title;
+        } else if (resource.type === 'bathroom') {
+            if (resource.gender_type) document.getElementById('genderType').value = resource.gender_type;
+        }
 
         // Set coordinates
         clickCoordinates = { x: resource.x_coordinate, y: resource.y_coordinate };

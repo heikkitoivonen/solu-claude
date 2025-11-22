@@ -140,6 +140,23 @@ def resources() -> Response | tuple[Response, int]:
             y_coordinate=data.get("y_coordinate"),
             floorplan_id=data.get("floorplan_id"),
         )
+
+        # Set type-specific metadata
+        resource_type = data.get("type")
+        if resource_type == "room":
+            resource.room_number = data.get("room_number")
+            resource.room_type = data.get("room_type")
+            resource.capacity = data.get("capacity")
+        elif resource_type == "printer":
+            resource.printer_name = data.get("printer_name")
+            resource.color_type = data.get("color_type")
+            resource.printer_model = data.get("printer_model")
+        elif resource_type == "person":
+            resource.email = data.get("email")
+            resource.title = data.get("title")
+        elif resource_type == "bathroom":
+            resource.gender_type = data.get("gender_type")
+
         db.session.add(resource)
         db.session.commit()
         return jsonify(resource.to_dict()), 201
@@ -164,6 +181,54 @@ def resource_detail(resource_id: int) -> Response | tuple[str, int]:
         resource.x_coordinate = data.get("x_coordinate", resource.x_coordinate)
         resource.y_coordinate = data.get("y_coordinate", resource.y_coordinate)
         resource.floorplan_id = data.get("floorplan_id", resource.floorplan_id)
+
+        # Update type-specific metadata
+        resource_type = data.get("type", resource.type)
+        if resource_type == "room":
+            resource.room_number = data.get("room_number", resource.room_number)
+            resource.room_type = data.get("room_type", resource.room_type)
+            resource.capacity = data.get("capacity", resource.capacity)
+            # Clear other type-specific fields
+            resource.printer_name = None
+            resource.color_type = None
+            resource.printer_model = None
+            resource.email = None
+            resource.title = None
+            resource.gender_type = None
+        elif resource_type == "printer":
+            resource.printer_name = data.get("printer_name", resource.printer_name)
+            resource.color_type = data.get("color_type", resource.color_type)
+            resource.printer_model = data.get("printer_model", resource.printer_model)
+            # Clear other type-specific fields
+            resource.room_number = None
+            resource.room_type = None
+            resource.capacity = None
+            resource.email = None
+            resource.title = None
+            resource.gender_type = None
+        elif resource_type == "person":
+            resource.email = data.get("email", resource.email)
+            resource.title = data.get("title", resource.title)
+            # Clear other type-specific fields
+            resource.room_number = None
+            resource.room_type = None
+            resource.capacity = None
+            resource.printer_name = None
+            resource.color_type = None
+            resource.printer_model = None
+            resource.gender_type = None
+        elif resource_type == "bathroom":
+            resource.gender_type = data.get("gender_type", resource.gender_type)
+            # Clear other type-specific fields
+            resource.room_number = None
+            resource.room_type = None
+            resource.capacity = None
+            resource.printer_name = None
+            resource.color_type = None
+            resource.printer_model = None
+            resource.email = None
+            resource.title = None
+
         db.session.commit()
         return jsonify(resource.to_dict())
 

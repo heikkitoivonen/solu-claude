@@ -73,6 +73,72 @@
                                 <option value="other">Other</option>
                             </select>
                         </div>
+
+                        <!-- Room-specific fields -->
+                        <div id="roomFields" class="metadata-fields" style="display: none;">
+                            <div class="form-group">
+                                <label for="roomNumber">Room Number</label>
+                                <input type="text" id="roomNumber" name="room_number" placeholder="e.g., 101">
+                            </div>
+                            <div class="form-group">
+                                <label for="roomType">Room Type</label>
+                                <select id="roomType" name="room_type">
+                                    <option value="">-- Select type --</option>
+                                    <option value="meeting">Meeting Room</option>
+                                    <option value="individual">Individual Office</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="capacity">Capacity (people)</label>
+                                <input type="number" id="capacity" name="capacity" min="1" placeholder="e.g., 8">
+                            </div>
+                        </div>
+
+                        <!-- Printer-specific fields -->
+                        <div id="printerFields" class="metadata-fields" style="display: none;">
+                            <div class="form-group">
+                                <label for="printerName">Printer Name</label>
+                                <input type="text" id="printerName" name="printer_name" placeholder="e.g., HP LaserJet">
+                            </div>
+                            <div class="form-group">
+                                <label for="colorType">Color Type</label>
+                                <select id="colorType" name="color_type">
+                                    <option value="">-- Select type --</option>
+                                    <option value="color">Color</option>
+                                    <option value="bw">Black & White</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="printerModel">Printer Model</label>
+                                <input type="text" id="printerModel" name="printer_model" placeholder="e.g., LaserJet Pro M404dn">
+                            </div>
+                        </div>
+
+                        <!-- Person-specific fields -->
+                        <div id="personFields" class="metadata-fields" style="display: none;">
+                            <div class="form-group">
+                                <label for="email">Email Address</label>
+                                <input type="email" id="email" name="email" placeholder="e.g., john.doe@company.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="title">Title</label>
+                                <input type="text" id="title" name="title" placeholder="e.g., Senior Developer">
+                            </div>
+                        </div>
+
+                        <!-- Bathroom-specific fields -->
+                        <div id="bathroomFields" class="metadata-fields" style="display: none;">
+                            <div class="form-group">
+                                <label for="genderType">Bathroom Type</label>
+                                <select id="genderType" name="gender_type">
+                                    <option value="">-- Select type --</option>
+                                    <option value="men">Men</option>
+                                    <option value="women">Women</option>
+                                    <option value="unisex">Unisex</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="coordinates-info">
                             <p>Click on the floorplan to set coordinates</p>
                             <div class="coords-display">

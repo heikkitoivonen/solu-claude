@@ -68,11 +68,28 @@ class Resource(db.Model):  # type: ignore[name-defined]
     floorplan_id = db.Column(db.Integer, db.ForeignKey("floorplan.id"), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # Room-specific metadata
+    room_number = db.Column(db.String(50), nullable=True)
+    room_type = db.Column(db.String(50), nullable=True)  # 'meeting' or 'individual'
+    capacity = db.Column(db.Integer, nullable=True)
+
+    # Printer-specific metadata
+    printer_name = db.Column(db.String(200), nullable=True)
+    color_type = db.Column(db.String(50), nullable=True)  # 'color' or 'bw'
+    printer_model = db.Column(db.String(200), nullable=True)
+
+    # Person-specific metadata
+    email = db.Column(db.String(200), nullable=True)
+    title = db.Column(db.String(200), nullable=True)
+
+    # Bathroom-specific metadata
+    gender_type = db.Column(db.String(50), nullable=True)  # 'men', 'women', or 'unisex'
+
     def __repr__(self) -> str:
         return f"<Resource {self.name} ({self.type})>"
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        base_dict = {
             "id": self.id,
             "name": self.name,
             "type": self.type,
@@ -81,3 +98,27 @@ class Resource(db.Model):  # type: ignore[name-defined]
             "floorplan_id": self.floorplan_id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
+        # Add type-specific metadata only if present
+        if self.type == "room":
+            base_dict.update(
+                {
+                    "room_number": self.room_number,
+                    "room_type": self.room_type,
+                    "capacity": self.capacity,
+                }
+            )
+        elif self.type == "printer":
+            base_dict.update(
+                {
+                    "printer_name": self.printer_name,
+                    "color_type": self.color_type,
+                    "printer_model": self.printer_model,
+                }
+            )
+        elif self.type == "person":
+            base_dict.update({"email": self.email, "title": self.title})
+        elif self.type == "bathroom":
+            base_dict.update({"gender_type": self.gender_type})
+
+        return base_dict

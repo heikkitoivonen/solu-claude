@@ -107,6 +107,7 @@
             <section class="create-section">
                 <h2>Create New Administrator</h2>
                 <form class="create-form" method="POST" action="{{ url_for('auth.create_user') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div>
                         <label>Username</label>
                         <input type="text" name="username" required>
@@ -138,10 +139,12 @@
                     <div class="user-actions">
                         {% if user.id != current_user.id %}
                         <form method="POST" action="{{ url_for('auth.reset_user_password', user_id=user.id) }}" style="display: inline;" onsubmit="return confirm('Reset password for {{ user.username }}?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="password" name="new_password" placeholder="New password" required minlength="6" style="padding: 4px; margin-right: 5px;">
                             <button type="submit" class="btn-small btn-reset">Reset Password</button>
                         </form>
                         <form method="POST" action="{{ url_for('auth.delete_user', user_id=user.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete {{ user.username }}?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn-small btn-delete">Delete</button>
                         </form>
                         {% else %}

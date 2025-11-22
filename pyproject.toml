@@ -1,7 +1,7 @@
 [project]
-name = "workspace"
+name = "office-resource-locator"
 version = "0.1.0"
-description = "Add your description here"
+description = "A Flask web application for locating office resources on interactive floorplans"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [

@@ -2,9 +2,6 @@
 Pytest configuration and fixtures for testing.
 """
 
-import os
-import tempfile
-
 import pytest
 
 from app import create_app, db
@@ -13,11 +10,9 @@ from app.models import Floorplan, Resource
 
 @pytest.fixture
 def app():
-    """Create application for testing."""
-    db_fd, db_path = tempfile.mkstemp()
-
+    """Create application for testing with in-memory database."""
     config = {
-        "SQLALCHEMY_DATABASE_URI": f"sqlite:///{db_path}",
+        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
         "TESTING": True,
         "WTF_CSRF_ENABLED": False,  # Disable CSRF for testing
         "SECRET_KEY": "test-secret-key",
@@ -30,9 +25,8 @@ def app():
         yield app
         db.session.remove()
         db.drop_all()
-
-    os.close(db_fd)
-    os.unlink(db_path)
+        # Dispose of the database engine to close all connections
+        db.engine.dispose()
 
 
 @pytest.fixture

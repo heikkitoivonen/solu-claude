@@ -52,23 +52,39 @@ cd office-resource-locator
 ```
 
 2. **Install dependencies**
+
+Using uv (recommended):
 ```bash
 uv sync
 ```
 
+Using pip:
+```bash
+pip install -r requirements.txt
+# For development (includes testing and linting tools):
+pip install -r requirements-dev.txt
+```
+
 3. **Initialize the database**
+
+Using uv:
 ```bash
 uv run flask db upgrade
 ```
 
+Using pip:
+```bash
+flask db upgrade
+```
+
 4. **Add sample data (optional)**
 ```bash
-uv run python add_test_data.py
+uv run python add_test_data.py  # or: python add_test_data.py
 ```
 
 5. **Run the application**
 ```bash
-uv run python run.py
+uv run python run.py  # or: python run.py
 ```
 
 6. **Open your browser**
@@ -216,12 +232,26 @@ uv run flask db current
 ### Using pip
 
 ```bash
-# Install dependencies
+# Install production dependencies
 pip install -r requirements.txt
+
+# Install development dependencies (testing, linting, etc.)
+pip install -r requirements-dev.txt
 
 # Run migration commands
 flask db migrate -m "Description"
 flask db upgrade
+
+# Run the application
+python run.py
+
+# Run tests
+pytest
+
+# Run linting
+ruff check app/ tests/ run.py
+black app/ tests/ run.py
+mypy app/
 ```
 
 ## Security

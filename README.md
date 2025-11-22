@@ -239,6 +239,68 @@ See [CLAUDE.md](CLAUDE.md) for detailed developer documentation, including:
 - Common commands
 - API endpoint details
 
+## Testing
+
+The application includes comprehensive unit tests with pytest.
+
+### Running Tests
+
+```bash
+# Run all tests
+uv run pytest
+
+# Run with verbose output
+uv run pytest -v
+
+# Run specific test file
+uv run pytest tests/test_models.py
+
+# Run specific test class
+uv run pytest tests/test_routes.py::TestSearchAPI
+
+# Run with coverage report
+uv run pytest --cov=app --cov-report=term-missing
+```
+
+### Test Structure
+
+```
+tests/
+├── conftest.py          # Pytest fixtures and configuration
+├── test_models.py       # Database model tests
+├── test_routes.py       # API endpoint tests
+└── test_security.py     # CSRF protection tests
+```
+
+### Test Coverage
+
+Current test coverage: **97%**
+
+The test suite includes:
+- **Model Tests**: Database operations, relationships, cascade deletes
+- **Route Tests**: All API endpoints, CRUD operations, file uploads
+- **Security Tests**: CSRF protection validation
+- **Integration Tests**: End-to-end workflows
+
+### Writing New Tests
+
+Tests use pytest fixtures defined in `conftest.py`:
+- `app` - Flask application instance with test database
+- `client` - Test client for making requests
+- `sample_floorplan` - Pre-created floorplan for testing
+- `sample_resource` - Pre-created resource for testing
+- `multiple_resources` - Multiple resources for search testing
+
+Example test:
+```python
+def test_search_resource(client, sample_resource):
+    """Test searching for a resource."""
+    response = client.get('/api/search?q=Test Room')
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert data['count'] == 1
+```
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.

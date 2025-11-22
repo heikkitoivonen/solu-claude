@@ -88,6 +88,32 @@ uv run flask db history    # Show all migrations
 uv run flask db downgrade  # Rollback one version
 ```
 
+### Testing
+
+**Run tests**:
+```bash
+uv run pytest              # Run all tests
+uv run pytest -v           # Verbose output
+uv run pytest tests/test_models.py  # Run specific file
+```
+
+**Test coverage**: 97% (39 tests passing)
+
+**Test structure**:
+- `tests/conftest.py` - Fixtures for app, client, sample data
+- `tests/test_models.py` - Model tests (Floorplan, Resource)
+- `tests/test_routes.py` - API endpoint tests
+- `tests/test_security.py` - CSRF protection tests
+
+**Important note about fixtures**: Fixtures return simple data objects with IDs (not SQLAlchemy objects) to avoid DetachedInstanceError. Tests must query fresh objects within app context:
+
+```python
+def test_something(app, sample_floorplan):
+    with app.app_context():
+        floorplan = Floorplan.query.get(sample_floorplan.id)
+        # Now work with the floorplan object
+```
+
 ## API Endpoints
 
 All endpoints are RESTful and return JSON.

@@ -46,3 +46,4 @@ instance/
 # Environment
 .env
 .env.local
+/.pytest_cache/

@@ -97,13 +97,15 @@ uv run pytest -v           # Verbose output
 uv run pytest tests/test_models.py  # Run specific file
 ```
 
-**Test coverage**: 97% (39 tests passing)
+**Test coverage**: 96% with branch coverage (39 tests passing)
 
 **Test structure**:
 - `tests/conftest.py` - Fixtures for app, client, sample data
 - `tests/test_models.py` - Model tests (Floorplan, Resource)
 - `tests/test_routes.py` - API endpoint tests
 - `tests/test_security.py` - CSRF protection tests
+
+**Branch coverage**: Tests include branch coverage, which measures whether all branches of conditional statements (if/else, try/except, etc.) are tested, not just whether lines are executed. This provides more comprehensive test coverage.
 
 **Important note about fixtures**: Fixtures return simple data objects with IDs (not SQLAlchemy objects) to avoid DetachedInstanceError. Tests must query fresh objects within app context:
 

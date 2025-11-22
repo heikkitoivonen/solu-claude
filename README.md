@@ -274,7 +274,7 @@ tests/
 
 ### Test Coverage
 
-Current test coverage: **97%**
+Current test coverage: **96%** (with branch coverage enabled)
 
 The test suite includes:
 - **Model Tests**: Database operations, relationships, cascade deletes

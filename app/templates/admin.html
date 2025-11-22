@@ -12,7 +12,12 @@
         <header>
             <h1>Admin Panel</h1>
             <p class="subtitle">Manage floorplans and resources</p>
-            <a href="/" class="home-link">Back to Search</a>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <a href="/" class="home-link">Back to Search</a>
+                <a href="{{ url_for('auth.list_users') }}" class="home-link">Manage Admins</a>
+                <a href="{{ url_for('auth.change_password') }}" class="home-link">Change Password</a>
+                <a href="{{ url_for('auth.logout') }}" class="home-link">Logout</a>
+            </div>
         </header>
 
         <div class="admin-content">

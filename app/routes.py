@@ -1,6 +1,7 @@
 import os
 
 from flask import Blueprint, Response, jsonify, render_template, request
+from flask_login import login_required
 from werkzeug.utils import secure_filename
 
 from app import db
@@ -22,6 +23,7 @@ def index() -> str:
 
 
 @main.route("/admin")
+@login_required
 def admin() -> str:
     return render_template("admin.html")
 

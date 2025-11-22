@@ -1,19 +1,31 @@
 from datetime import datetime
 from typing import Any
 
+from flask_login import UserMixin
+from werkzeug.security import check_password_hash, generate_password_hash
+
 from app import db
 
 
-class User(db.Model):  # type: ignore[name-defined]
+class User(UserMixin, db.Model):  # type: ignore[name-defined]
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255))
+    email = db.Column(db.String(120), unique=True, nullable=True)
+    password_hash = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
+    password_must_change = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self) -> str:
         return f"<User {self.username}>"
+
+    def set_password(self, password: str) -> None:
+        """Set password hash from plain text password."""
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password: str) -> bool:
+        """Check if provided password matches hash."""
+        return check_password_hash(self.password_hash, password)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -21,6 +33,7 @@ class User(db.Model):  # type: ignore[name-defined]
             "username": self.username,
             "email": self.email,
             "is_admin": self.is_admin,
+            "password_must_change": self.password_must_change,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 

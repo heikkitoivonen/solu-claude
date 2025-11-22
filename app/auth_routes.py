@@ -1,5 +1,7 @@
 """Authentication routes for user login, logout, and password management."""
 
+import re
+
 from flask import Blueprint, Response, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
@@ -7,6 +9,42 @@ from app import db
 from app.models import User
 
 auth = Blueprint("auth", __name__)
+
+
+def validate_password(password: str, current_password: str | None = None) -> tuple[bool, str]:
+    """
+    Validate password against security requirements.
+
+    Requirements:
+    - Minimum 10 characters
+    - At least one uppercase letter
+    - At least one lowercase letter
+    - At least one number
+    - At least one special character
+    - Must not be the same as current password (if provided)
+
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    if len(password) < 10:
+        return False, "Password must be at least 10 characters long"
+
+    if not re.search(r"[A-Z]", password):
+        return False, "Password must contain at least one uppercase letter"
+
+    if not re.search(r"[a-z]", password):
+        return False, "Password must contain at least one lowercase letter"
+
+    if not re.search(r"\d", password):
+        return False, "Password must contain at least one number"
+
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return False, "Password must contain at least one special character (!@#$%^&*(),.?\":{}|<>)"
+
+    if current_password and password == current_password:
+        return False, "New password must be different from the current password"
+
+    return True, ""
 
 
 @auth.route("/login", methods=["GET", "POST"])
@@ -70,6 +108,11 @@ def change_password() -> str | Response:
                 "change_password.html", must_change=current_user.password_must_change
             )
 
+        # Type narrowing: all three passwords are guaranteed to be str at this point
+        assert isinstance(current_password, str)
+        assert isinstance(new_password, str)
+        assert isinstance(confirm_password, str)
+
         if not current_user.check_password(current_password):
             flash("Current password is incorrect", "error")
             return render_template(
@@ -82,8 +125,11 @@ def change_password() -> str | Response:
                 "change_password.html", must_change=current_user.password_must_change
             )
 
-        if len(new_password) < 6:
-            flash("Password must be at least 6 characters long", "error")
+        # Validate new password meets security requirements
+        # At this point we know current_password is not None due to earlier validation
+        is_valid, error_msg = validate_password(new_password, current_password)
+        if not is_valid:
+            flash(error_msg, "error")
             return render_template(
                 "change_password.html", must_change=current_user.password_must_change
             )
@@ -129,6 +175,12 @@ def create_user() -> Response:
         flash(f"User '{username}' already exists", "error")
         return redirect(url_for("auth.list_users"))
 
+    # Validate password meets security requirements
+    is_valid, error_msg = validate_password(password)
+    if not is_valid:
+        flash(error_msg, "error")
+        return redirect(url_for("auth.list_users"))
+
     user = User(username=username, is_admin=True, password_must_change=True)
     user.set_password(password)
     db.session.add(user)
@@ -170,6 +222,12 @@ def reset_user_password(user_id: int) -> Response:
     new_password = request.form.get("new_password")
     if not new_password:
         flash("New password is required", "error")
+        return redirect(url_for("auth.list_users"))
+
+    # Validate password meets security requirements
+    is_valid, error_msg = validate_password(new_password)
+    if not is_valid:
+        flash(error_msg, "error")
         return redirect(url_for("auth.list_users"))
 
     user = User.query.get_or_404(user_id)

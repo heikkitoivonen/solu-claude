@@ -51,14 +51,21 @@ def create_app(config: dict[str, Any] | None = None) -> Flask:
 
 
 def create_default_admin() -> None:
-    """Create default admin user if it doesn't exist. Call after migrations."""
+    """
+    Create default admin user if it doesn't exist. Call after migrations.
+
+    Default credentials:
+    - Username: admin
+    - Password: Admin123!@# (must be changed on first login)
+    """
     from app.models import User
 
     try:
         # Only create if no admin users exist
         if not User.query.filter_by(username="admin").first():
             admin = User(username="admin", is_admin=True, password_must_change=True)
-            admin.set_password("admin")
+            # Use a strong default password that meets all requirements
+            admin.set_password("Admin123!@#")
             db.session.add(admin)
             db.session.commit()
     except Exception:

@@ -109,14 +109,24 @@ uv run flask db downgrade  # Rollback one version
 uv run pytest              # Run all tests
 uv run pytest -v           # Verbose output
 uv run pytest tests/test_models.py  # Run specific file
+
+# Run with coverage report
+uv run pytest --cov=app --cov-report=term-missing --cov-report=html --cov-branch
 ```
 
-**Test coverage**: 96% with branch coverage (39 tests passing)
+**Test coverage**: 82% with branch coverage (89 tests passing)
+
+**IMPORTANT: Test coverage requirement**
+- **Minimum test coverage must be 80% or greater**
+- Always run tests with `--cov-branch` to include branch coverage
+- When adding new code, ensure corresponding tests are added to maintain coverage
+- Coverage report shows missing lines and branches in `htmlcov/index.html`
 
 **Test structure**:
-- `tests/conftest.py` - Fixtures for app, client, sample data
-- `tests/test_models.py` - Model tests (Floorplan, Resource)
+- `tests/conftest.py` - Fixtures for app, client, sample data, users
+- `tests/test_models.py` - Model tests (Floorplan, Resource, User)
 - `tests/test_routes.py` - API endpoint tests
+- `tests/test_auth_routes.py` - Authentication route tests (login, logout, password management, user management)
 - `tests/test_security.py` - CSRF protection tests
 
 **Branch coverage**: Tests include branch coverage, which measures whether all branches of conditional statements (if/else, try/except, etc.) are tested, not just whether lines are executed. This provides more comprehensive test coverage.

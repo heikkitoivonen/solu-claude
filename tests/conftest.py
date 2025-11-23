@@ -5,7 +5,7 @@ Pytest configuration and fixtures for testing.
 import pytest
 
 from app import create_app, db
-from app.models import Floorplan, Resource
+from app.models import Floorplan, Resource, User
 
 
 @pytest.fixture
@@ -114,3 +114,57 @@ def multiple_resources(app, sample_floorplan):
         db.session.commit()
 
     return None  # Just need the data to be in the database
+
+
+@pytest.fixture
+def admin_user(app):
+    """Create an admin user for testing."""
+    with app.app_context():
+        user = User(username="testadmin", is_admin=True, password_must_change=False)
+        user.set_password("Admin123!@#")
+        db.session.add(user)
+        db.session.commit()
+        user_id = user.id
+
+    class UserData:
+        def __init__(self, id, username):
+            self.id = id
+            self.username = username
+
+    return UserData(user_id, "testadmin")
+
+
+@pytest.fixture
+def admin_user_must_change(app):
+    """Create an admin user who must change password."""
+    with app.app_context():
+        user = User(username="newadmin", is_admin=True, password_must_change=True)
+        user.set_password("Admin123!@#")
+        db.session.add(user)
+        db.session.commit()
+        user_id = user.id
+
+    class UserData:
+        def __init__(self, id, username):
+            self.id = id
+            self.username = username
+
+    return UserData(user_id, "newadmin")
+
+
+@pytest.fixture
+def regular_user(app):
+    """Create a non-admin user for testing."""
+    with app.app_context():
+        user = User(username="regularuser", is_admin=False, password_must_change=False)
+        user.set_password("Regular123!@#")
+        db.session.add(user)
+        db.session.commit()
+        user_id = user.id
+
+    class UserData:
+        def __init__(self, id, username):
+            self.id = id
+            self.username = username
+
+    return UserData(user_id, "regularuser")

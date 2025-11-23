@@ -15,8 +15,13 @@ class TestViews:
         assert response.status_code == 200
         assert b"Office Resource Locator" in response.data
 
-    def test_admin_page(self, client):
-        """Test admin page loads."""
+    def test_admin_page(self, client, admin_user):
+        """Test admin page loads after login."""
+        # Login first
+        client.post(
+            "/login",
+            data={"username": "testadmin", "password": "Admin123!@#"},
+        )
         response = client.get("/admin")
         assert response.status_code == 200
         assert b"Admin Panel" in response.data

@@ -1,0 +1,8 @@
+# Ignore all uploaded image files
+*.png
+*.jpg
+*.jpeg
+*.gif
+
+# Keep the sample floorplan
+!sample_floorplan.svg

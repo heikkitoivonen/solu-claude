@@ -1,184 +1,188 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Admin - Office Resource Locator</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>Admin Panel</h1>
-            <p class="subtitle">Manage floorplans and resources</p>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <a href="/" class="home-link">Back to Search</a>
-                <a href="{{ url_for('auth.list_users') }}" class="home-link">Manage Admins</a>
-                <a href="{{ url_for('auth.change_password') }}" class="home-link">Change Password</a>
-                <a href="{{ url_for('auth.logout') }}" class="home-link">Logout</a>
+{% extends "base.html" %}
+
+{% block meta %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+{% endblock %}
+
+{% block title %}Admin - Office Resource Locator{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block header %}
+<header>
+    <h1>Admin Panel</h1>
+    <p class="subtitle">Manage floorplans and resources</p>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="/" class="home-link">Back to Search</a>
+        <a href="{{ url_for('auth.list_users') }}" class="home-link">Manage Admins</a>
+        <a href="{{ url_for('auth.change_password') }}" class="home-link">Change Password</a>
+        <a href="{{ url_for('auth.logout') }}" class="home-link">Logout</a>
+    </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="admin-content">
+    <!-- Left Panel: Forms and Lists -->
+    <div class="left-panel">
+        <!-- Upload Floorplan Section -->
+        <section class="card">
+            <h2>Upload Floorplan</h2>
+            <form id="floorplanForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="floorplanName">Floorplan Name</label>
+                    <input type="text" id="floorplanName" name="name" required placeholder="e.g., First Floor">
+                </div>
+                <div class="form-group">
+                    <label for="floorplanImage">Floorplan Image</label>
+                    <input type="file" id="floorplanImage" name="image" accept="image/*" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Upload Floorplan</button>
+            </form>
+        </section>
+
+        <!-- Floorplans List -->
+        <section class="card">
+            <h2>Floorplans</h2>
+            <div id="floorplansList" class="list-container">
+                <p class="loading">Loading floorplans...</p>
             </div>
-        </header>
+        </section>
 
-        <div class="admin-content">
-            <!-- Left Panel: Forms and Lists -->
-            <div class="left-panel">
-                <!-- Upload Floorplan Section -->
-                <section class="card">
-                    <h2>Upload Floorplan</h2>
-                    <form id="floorplanForm" enctype="multipart/form-data">
-                        <div class="form-group">
-                            <label for="floorplanName">Floorplan Name</label>
-                            <input type="text" id="floorplanName" name="name" required placeholder="e.g., First Floor">
-                        </div>
-                        <div class="form-group">
-                            <label for="floorplanImage">Floorplan Image</label>
-                            <input type="file" id="floorplanImage" name="image" accept="image/*" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Upload Floorplan</button>
-                    </form>
-                </section>
+        <!-- Create Resource Section -->
+        <section class="card">
+            <h2 id="resourceFormTitle">Create Resource</h2>
+            <form id="resourceForm">
+                <div class="form-group">
+                    <label for="resourceFloorplan">Select Floorplan</label>
+                    <select id="resourceFloorplan" name="floorplan_id" required>
+                        <option value="">-- Select a floorplan --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="resourceName">Resource Name</label>
+                    <input type="text" id="resourceName" name="name" required placeholder="e.g., Conference Room A">
+                </div>
+                <div class="form-group">
+                    <label for="resourceType">Resource Type</label>
+                    <select id="resourceType" name="type" required>
+                        <option value="room">Room</option>
+                        <option value="printer">Printer</option>
+                        <option value="person">Person</option>
+                        <option value="kitchen">Kitchen</option>
+                        <option value="bathroom">Bathroom</option>
+                        <option value="equipment">Equipment</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
 
-                <!-- Floorplans List -->
-                <section class="card">
-                    <h2>Floorplans</h2>
-                    <div id="floorplansList" class="list-container">
-                        <p class="loading">Loading floorplans...</p>
+                <!-- Room-specific fields -->
+                <div id="roomFields" class="metadata-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="roomNumber">Room Number</label>
+                        <input type="text" id="roomNumber" name="room_number" placeholder="e.g., 101">
                     </div>
-                </section>
-
-                <!-- Create Resource Section -->
-                <section class="card">
-                    <h2 id="resourceFormTitle">Create Resource</h2>
-                    <form id="resourceForm">
-                        <div class="form-group">
-                            <label for="resourceFloorplan">Select Floorplan</label>
-                            <select id="resourceFloorplan" name="floorplan_id" required>
-                                <option value="">-- Select a floorplan --</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="resourceName">Resource Name</label>
-                            <input type="text" id="resourceName" name="name" required placeholder="e.g., Conference Room A">
-                        </div>
-                        <div class="form-group">
-                            <label for="resourceType">Resource Type</label>
-                            <select id="resourceType" name="type" required>
-                                <option value="room">Room</option>
-                                <option value="printer">Printer</option>
-                                <option value="person">Person</option>
-                                <option value="kitchen">Kitchen</option>
-                                <option value="bathroom">Bathroom</option>
-                                <option value="equipment">Equipment</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-
-                        <!-- Room-specific fields -->
-                        <div id="roomFields" class="metadata-fields" style="display: none;">
-                            <div class="form-group">
-                                <label for="roomNumber">Room Number</label>
-                                <input type="text" id="roomNumber" name="room_number" placeholder="e.g., 101">
-                            </div>
-                            <div class="form-group">
-                                <label for="roomType">Room Type</label>
-                                <select id="roomType" name="room_type">
-                                    <option value="">-- Select type --</option>
-                                    <option value="meeting">Meeting Room</option>
-                                    <option value="individual">Individual Office</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="capacity">Capacity (people)</label>
-                                <input type="number" id="capacity" name="capacity" min="1" placeholder="e.g., 8">
-                            </div>
-                        </div>
-
-                        <!-- Printer-specific fields -->
-                        <div id="printerFields" class="metadata-fields" style="display: none;">
-                            <div class="form-group">
-                                <label for="printerName">Printer Name</label>
-                                <input type="text" id="printerName" name="printer_name" placeholder="e.g., HP LaserJet">
-                            </div>
-                            <div class="form-group">
-                                <label for="colorType">Color Type</label>
-                                <select id="colorType" name="color_type">
-                                    <option value="">-- Select type --</option>
-                                    <option value="color">Color</option>
-                                    <option value="bw">Black & White</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="printerModel">Printer Model</label>
-                                <input type="text" id="printerModel" name="printer_model" placeholder="e.g., LaserJet Pro M404dn">
-                            </div>
-                        </div>
-
-                        <!-- Person-specific fields -->
-                        <div id="personFields" class="metadata-fields" style="display: none;">
-                            <div class="form-group">
-                                <label for="email">Email Address</label>
-                                <input type="email" id="email" name="email" placeholder="e.g., john.doe@company.com">
-                            </div>
-                            <div class="form-group">
-                                <label for="title">Title</label>
-                                <input type="text" id="title" name="title" placeholder="e.g., Senior Developer">
-                            </div>
-                        </div>
-
-                        <!-- Bathroom-specific fields -->
-                        <div id="bathroomFields" class="metadata-fields" style="display: none;">
-                            <div class="form-group">
-                                <label for="genderType">Bathroom Type</label>
-                                <select id="genderType" name="gender_type">
-                                    <option value="">-- Select type --</option>
-                                    <option value="men">Men</option>
-                                    <option value="women">Women</option>
-                                    <option value="unisex">Unisex</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="coordinates-info">
-                            <p>Click on the floorplan to set coordinates</p>
-                            <div class="coords-display">
-                                X: <span id="coordX">--</span>, Y: <span id="coordY">--</span>
-                            </div>
-                        </div>
-                        <input type="hidden" id="resourceX" name="x_coordinate">
-                        <input type="hidden" id="resourceY" name="y_coordinate">
-                        <input type="hidden" id="editingResourceId" name="id">
-                        <div style="display: flex; gap: 10px;">
-                            <button type="submit" class="btn btn-primary" id="resourceSubmitBtn">Create Resource</button>
-                            <button type="button" class="btn btn-secondary" id="cancelEditBtn" style="display: none;">Cancel</button>
-                        </div>
-                    </form>
-                </section>
-
-                <!-- Resources List -->
-                <section class="card">
-                    <h2>Resources</h2>
-                    <div id="resourcesList" class="list-container">
-                        <p class="loading">Loading resources...</p>
+                    <div class="form-group">
+                        <label for="roomType">Room Type</label>
+                        <select id="roomType" name="room_type">
+                            <option value="">-- Select type --</option>
+                            <option value="meeting">Meeting Room</option>
+                            <option value="individual">Individual Office</option>
+                        </select>
                     </div>
-                </section>
+                    <div class="form-group">
+                        <label for="capacity">Capacity (people)</label>
+                        <input type="number" id="capacity" name="capacity" min="1" placeholder="e.g., 8">
+                    </div>
+                </div>
+
+                <!-- Printer-specific fields -->
+                <div id="printerFields" class="metadata-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="printerName">Printer Name</label>
+                        <input type="text" id="printerName" name="printer_name" placeholder="e.g., HP LaserJet">
+                    </div>
+                    <div class="form-group">
+                        <label for="colorType">Color Type</label>
+                        <select id="colorType" name="color_type">
+                            <option value="">-- Select type --</option>
+                            <option value="color">Color</option>
+                            <option value="bw">Black & White</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="printerModel">Printer Model</label>
+                        <input type="text" id="printerModel" name="printer_model" placeholder="e.g., LaserJet Pro M404dn">
+                    </div>
+                </div>
+
+                <!-- Person-specific fields -->
+                <div id="personFields" class="metadata-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" placeholder="e.g., john.doe@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" name="title" placeholder="e.g., Senior Developer">
+                    </div>
+                </div>
+
+                <!-- Bathroom-specific fields -->
+                <div id="bathroomFields" class="metadata-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="genderType">Bathroom Type</label>
+                        <select id="genderType" name="gender_type">
+                            <option value="">-- Select type --</option>
+                            <option value="men">Men</option>
+                            <option value="women">Women</option>
+                            <option value="unisex">Unisex</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="coordinates-info">
+                    <p>Click on the floorplan to set coordinates</p>
+                    <div class="coords-display">
+                        X: <span id="coordX">--</span>, Y: <span id="coordY">--</span>
+                    </div>
+                </div>
+                <input type="hidden" id="resourceX" name="x_coordinate">
+                <input type="hidden" id="resourceY" name="y_coordinate">
+                <input type="hidden" id="editingResourceId" name="id">
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary" id="resourceSubmitBtn">Create Resource</button>
+                    <button type="button" class="btn btn-secondary" id="cancelEditBtn" style="display: none;">Cancel</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Resources List -->
+        <section class="card">
+            <h2>Resources</h2>
+            <div id="resourcesList" class="list-container">
+                <p class="loading">Loading resources...</p>
             </div>
-
-            <!-- Right Panel: Floorplan Viewer -->
-            <div class="right-panel">
-                <section class="card">
-                    <h2>Floorplan Viewer</h2>
-                    <div id="floorplanViewer" class="floorplan-viewer">
-                        <p class="placeholder">Select a floorplan to view and place resources</p>
-                    </div>
-                </section>
-            </div>
-        </div>
-
-        <!-- Success/Error Messages -->
-        <div id="toast" class="toast"></div>
+        </section>
     </div>
 
-    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
-</body>
-</html>
+    <!-- Right Panel: Floorplan Viewer -->
+    <div class="right-panel">
+        <section class="card">
+            <h2>Floorplan Viewer</h2>
+            <div id="floorplanViewer" class="floorplan-viewer">
+                <p class="placeholder">Select a floorplan to view and place resources</p>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Success/Error Messages -->
+<div id="toast" class="toast"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

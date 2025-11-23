@@ -1,55 +1,52 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Office Resource Locator</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>Office Resource Locator</h1>
-            <p class="subtitle">Search for rooms, printers, people, and more</p>
-            <a href="/admin" style="display: inline-block; margin-top: 10px; padding: 8px 16px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Admin Panel</a>
-        </header>
+{% extends "base.html" %}
 
-        <div class="search-section">
-            <div class="search-box">
-                <input
-                    type="text"
-                    id="searchInput"
-                    placeholder="Enter resource name (e.g., Conference Room A, Printer 2, John Doe)"
-                    autocomplete="off"
-                >
-                <button id="searchButton">Search</button>
-            </div>
-        </div>
+{% block title %}Office Resource Locator{% endblock %}
 
-        <div id="errorMessage" class="error-message"></div>
+{% block header %}
+<header>
+    <h1>Office Resource Locator</h1>
+    <p class="subtitle">Search for rooms, printers, people, and more</p>
+    <a href="/admin" style="display: inline-block; margin-top: 10px; padding: 8px 16px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Admin Panel</a>
+</header>
+{% endblock %}
 
-        <div id="multipleResultsSection" class="multiple-results-section">
-            <h2>Multiple Results Found</h2>
-            <p class="results-count"></p>
-            <div id="resultsList" class="results-list"></div>
-        </div>
+{% block content %}
+<div class="search-section">
+    <div class="search-box">
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Enter resource name (e.g., Conference Room A, Printer 2, John Doe)"
+            autocomplete="off"
+        >
+        <button id="searchButton">Search</button>
+    </div>
+</div>
 
-        <div id="resultsSection" class="results-section">
-            <div class="result-info">
-                <h2 id="resourceName"></h2>
-                <p id="resourceType"></p>
-            </div>
+<div id="errorMessage" class="error-message"></div>
 
-            <div class="floorplan-container">
-                <h3 id="floorplanName"></h3>
-                <div class="floorplan-wrapper">
-                    <img id="floorplanImage" src="" alt="Floorplan">
-                    <div id="cursor" class="cursor"></div>
-                </div>
-            </div>
-        </div>
+<div id="multipleResultsSection" class="multiple-results-section">
+    <h2>Multiple Results Found</h2>
+    <p class="results-count"></p>
+    <div id="resultsList" class="results-list"></div>
+</div>
+
+<div id="resultsSection" class="results-section">
+    <div class="result-info">
+        <h2 id="resourceName"></h2>
+        <p id="resourceType"></p>
     </div>
 
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-</body>
-</html>
+    <div class="floorplan-container">
+        <h3 id="floorplanName"></h3>
+        <div class="floorplan-wrapper">
+            <img id="floorplanImage" src="" alt="Floorplan">
+            <div id="cursor" class="cursor"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}

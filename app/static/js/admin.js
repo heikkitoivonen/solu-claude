@@ -327,7 +327,17 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderFloorplanWithResources() {
         if (!currentFloorplan) return;
 
-        const floorplanResources = resources.filter(r => r.floorplan_id === currentFloorplan.id);
+        // Filter resources based on edit mode
+        let floorplanResources;
+        const editingId = editingResourceId.value;
+
+        if (editingId) {
+            // In edit mode: show only the resource being edited
+            floorplanResources = resources.filter(r => r.id === parseInt(editingId));
+        } else {
+            // Not editing: show all resources on this floorplan
+            floorplanResources = resources.filter(r => r.floorplan_id === currentFloorplan.id);
+        }
 
         floorplanViewer.innerHTML = `
             <h3 style="margin-bottom: 15px; color: #555;">${currentFloorplan.name}</h3>

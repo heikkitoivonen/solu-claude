@@ -1,7 +1,9 @@
 import os
+from io import BytesIO
 
 from flask import Blueprint, Response, jsonify, render_template, request
 from flask_login import login_required
+from PIL import Image
 from werkzeug.utils import secure_filename
 
 from app import db
@@ -10,11 +12,40 @@ from app.models import Floorplan, Resource
 main = Blueprint("main", __name__)
 
 UPLOAD_FOLDER = "app/static/floorplans"
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "svg"}
+# Removed SVG to prevent XSS attacks (SVG can contain scripts)
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+ALLOWED_FORMATS = {"PNG", "JPEG", "GIF"}  # PIL format names
 
 
 def allowed_file(filename: str) -> bool:
+    """Check if file extension is allowed."""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def validate_image(stream) -> bool:
+    """
+    Validate that uploaded file is actually an image by checking file content.
+
+    This prevents attackers from uploading malicious files with image extensions.
+    Uses PIL/Pillow to verify the file is a valid image.
+    """
+    try:
+        # Read the stream into memory
+        stream.seek(0)
+        img_data = stream.read()
+        stream.seek(0)
+
+        # Try to open and verify the image
+        img = Image.open(BytesIO(img_data))
+        img.verify()  # Verify it's a valid image
+
+        # Check if format is allowed
+        if img.format not in ALLOWED_FORMATS:
+            return False
+
+        return True
+    except Exception:
+        return False
 
 
 @main.route("/")
@@ -63,6 +94,7 @@ def search() -> Response | tuple[Response, int]:
 
 
 @main.route("/api/floorplans", methods=["GET", "POST"])
+@login_required
 def floorplans() -> Response | tuple[Response, int]:
     if request.method == "POST":
         # Handle file upload
@@ -77,6 +109,10 @@ def floorplans() -> Response | tuple[Response, int]:
                 return jsonify({"error": "No file selected"}), 400
 
             if file and file.filename and allowed_file(file.filename):
+                # Validate file content to ensure it's actually an image
+                if not validate_image(file.stream):
+                    return jsonify({"error": "Invalid file content. File must be a valid image."}), 400
+
                 filename = secure_filename(file.filename)
                 # Add timestamp to filename to avoid conflicts
                 import time
@@ -95,7 +131,7 @@ def floorplans() -> Response | tuple[Response, int]:
                 return jsonify(floorplan.to_dict()), 201
             else:
                 return (
-                    jsonify({"error": "Invalid file type. Allowed: png, jpg, jpeg, gif, svg"}),
+                    jsonify({"error": "Invalid file type. Allowed: png, jpg, jpeg, gif"}),
                     400,
                 )
         else:
@@ -111,6 +147,7 @@ def floorplans() -> Response | tuple[Response, int]:
 
 
 @main.route("/api/floorplans/<int:floorplan_id>", methods=["GET", "PUT", "DELETE"])
+@login_required
 def floorplan_detail(floorplan_id: int) -> Response | tuple[str, int]:
     floorplan = Floorplan.query.get_or_404(floorplan_id)
 
@@ -130,6 +167,7 @@ def floorplan_detail(floorplan_id: int) -> Response | tuple[str, int]:
 
 
 @main.route("/api/resources", methods=["GET", "POST"])
+@login_required
 def resources() -> Response | tuple[Response, int]:
     if request.method == "POST":
         data = request.get_json()
@@ -166,6 +204,7 @@ def resources() -> Response | tuple[Response, int]:
 
 
 @main.route("/api/resources/<int:resource_id>", methods=["GET", "PUT", "DELETE"])
+@login_required
 def resource_detail(resource_id: int) -> Response | tuple[str, int]:
     resource = Resource.query.get_or_404(resource_id)
 

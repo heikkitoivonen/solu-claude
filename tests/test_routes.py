@@ -5,6 +5,8 @@ Tests for API routes and views.
 import json
 from io import BytesIO
 
+from PIL import Image
+
 
 class TestViews:
     """Tests for view routes."""
@@ -91,36 +93,61 @@ class TestSearchAPI:
 class TestFloorplansAPI:
     """Tests for floorplans API endpoints."""
 
-    def test_get_floorplans_empty(self, client):
+    def test_get_floorplans_empty(self, client, admin_user):
         """Test getting floorplans when none exist."""
+        # Login first
+        client.post(
+            "/login",
+            data={"username": "testadmin", "password": "Admin123!@#"},
+        )
         response = client.get("/api/floorplans")
         assert response.status_code == 200
         data = json.loads(response.data)
         assert isinstance(data, list)
         assert len(data) == 0
 
-    def test_get_floorplans(self, client, sample_floorplan):
+    def test_get_floorplans(self, client, admin_user, sample_floorplan):
         """Test getting all floorplans."""
+        # Login first
+        client.post(
+            "/login",
+            data={"username": "testadmin", "password": "Admin123!@#"},
+        )
         response = client.get("/api/floorplans")
         assert response.status_code == 200
         data = json.loads(response.data)
         assert len(data) == 1
         assert data[0]["name"] == "Test Floor"
 
-    def test_get_floorplan_by_id(self, client, sample_floorplan):
+    def test_get_floorplan_by_id(self, client, admin_user, sample_floorplan):
         """Test getting single floorplan by ID."""
+        # Login first
+        client.post(
+            "/login",
+            data={"username": "testadmin", "password": "Admin123!@#"},
+        )
         response = client.get(f"/api/floorplans/{sample_floorplan.id}")
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data["name"] == "Test Floor"
 
-    def test_get_floorplan_not_found(self, client):
+    def test_get_floorplan_not_found(self, client, admin_user):
         """Test getting non-existent floorplan."""
+        # Login first
+        client.post(
+            "/login",
+            data={"username": "testadmin", "password": "Admin123!@#"},
+        )
         response = client.get("/api/floorplans/999")
         assert response.status_code == 404
 
-    def test_create_floorplan_json(self, client):
+    def test_create_floorplan_json(self, client, admin_user):
         """Test creating floorplan with JSON."""
+        # Login first
+        client.post(
+            "/login",
+            data={"username": "testadmin", "password": "Admin123!@#"},
+        )
         response = client.post(
             "/api/floorplans",
             data=json.dumps({"name": "New Floor", "image_filename": "new_floor.png"}),
@@ -131,23 +158,44 @@ class TestFloorplansAPI:
         assert data["name"] == "New Floor"
         assert data["image_filename"] == "new_floor.png"
 
-    def test_create_floorplan_file_upload(self, client):
+    def test_create_floorplan_file_upload(self, client, admin_user):
         """Test creating floorplan with file upload."""
-        data = {"name": "Uploaded Floor", "image": (BytesIO(b"fake image data"), "test.png")}
+        # Login first
+        client.post(
+            "/login",
+            data={"username": "testadmin", "password": "Admin123!@#"},
+        )
+        # Create a valid PNG image
+        img = Image.new("RGB", (1, 1), color="red")
+        img_bytes = BytesIO()
+        img.save(img_bytes, format="PNG")
+        img_bytes.seek(0)
+
+        data = {"name": "Uploaded Floor", "image": (img_bytes, "test.png")}
         response = client.post("/api/floorplans", data=data, content_type="multipart/form-data")
         assert response.status_code == 201
         response_data = json.loads(response.data)
         assert response_data["name"] == "Uploaded Floor"
         assert ".png" in response_data["image_filename"]
 
-    def test_create_floorplan_invalid_file_type(self, client):
+    def test_create_floorplan_invalid_file_type(self, client, admin_user):
         """Test creating floorplan with invalid file type."""
+        # Login first
+        client.post(
+            "/login",
+            data={"username": "testadmin", "password": "Admin123!@#"},
+        )
         data = {"name": "Bad Floor", "image": (BytesIO(b"fake data"), "test.txt")}
         response = client.post("/api/floorplans", data=data, content_type="multipart/form-data")
         assert response.status_code == 400
 
-    def test_update_floorplan(self, client, sample_floorplan):
+    def test_update_floorplan(self, client, admin_user, sample_floorplan):
         """Test updating a floorplan."""
+        # Login first
+        client.post(
+            "/login",
+            data={"username": "testadmin", "password": "Admin123!@#"},
+        )
         response = client.put(
             f"/api/floorplans/{sample_floorplan.id}",
             data=json.dumps({"name": "Updated Floor"}),
@@ -157,8 +205,13 @@ class TestFloorplansAPI:
         data = json.loads(response.data)
         assert data["name"] == "Updated Floor"
 
-    def test_delete_floorplan(self, client, sample_floorplan):
+    def test_delete_floorplan(self, client, admin_user, sample_floorplan):
         """Test deleting a floorplan."""
+        # Login first
+        client.post(
+            "/login",
+            data={"username": "testadmin", "password": "Admin123!@#"},
+        )
         response = client.delete(f"/api/floorplans/{sample_floorplan.id}")
         assert response.status_code == 204
 
@@ -170,36 +223,61 @@ class TestFloorplansAPI:
 class TestResourcesAPI:
     """Tests for resources API endpoints."""
 
-    def test_get_resources_empty(self, client):
+    def test_get_resources_empty(self, client, admin_user):
         """Test getting resources when none exist."""
+        # Login first
+        client.post(
+            "/login",
+            data={"username": "testadmin", "password": "Admin123!@#"},
+        )
         response = client.get("/api/resources")
         assert response.status_code == 200
         data = json.loads(response.data)
         assert isinstance(data, list)
         assert len(data) == 0
 
-    def test_get_resources(self, client, sample_resource):
+    def test_get_resources(self, client, admin_user, sample_resource):
         """Test getting all resources."""
+        # Login first
+        client.post(
+            "/login",
+            data={"username": "testadmin", "password": "Admin123!@#"},
+        )
         response = client.get("/api/resources")
         assert response.status_code == 200
         data = json.loads(response.data)
         assert len(data) == 1
         assert data[0]["name"] == "Test Room"
 
-    def test_get_resource_by_id(self, client, sample_resource):
+    def test_get_resource_by_id(self, client, admin_user, sample_resource):
         """Test getting single resource by ID."""
+        # Login first
+        client.post(
+            "/login",
+            data={"username": "testadmin", "password": "Admin123!@#"},
+        )
         response = client.get(f"/api/resources/{sample_resource.id}")
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data["name"] == "Test Room"
 
-    def test_get_resource_not_found(self, client):
+    def test_get_resource_not_found(self, client, admin_user):
         """Test getting non-existent resource."""
+        # Login first
+        client.post(
+            "/login",
+            data={"username": "testadmin", "password": "Admin123!@#"},
+        )
         response = client.get("/api/resources/999")
         assert response.status_code == 404
 
-    def test_create_resource(self, client, sample_floorplan):
+    def test_create_resource(self, client, admin_user, sample_floorplan):
         """Test creating a resource."""
+        # Login first
+        client.post(
+            "/login",
+            data={"username": "testadmin", "password": "Admin123!@#"},
+        )
         response = client.post(
             "/api/resources",
             data=json.dumps(
@@ -220,8 +298,13 @@ class TestResourcesAPI:
         assert data["x_coordinate"] == 300
         assert data["y_coordinate"] == 400
 
-    def test_update_resource(self, client, sample_resource):
+    def test_update_resource(self, client, admin_user, sample_resource):
         """Test updating a resource."""
+        # Login first
+        client.post(
+            "/login",
+            data={"username": "testadmin", "password": "Admin123!@#"},
+        )
         response = client.put(
             f"/api/resources/{sample_resource.id}",
             data=json.dumps({"name": "Updated Room", "x_coordinate": 150}),
@@ -232,8 +315,13 @@ class TestResourcesAPI:
         assert data["name"] == "Updated Room"
         assert data["x_coordinate"] == 150
 
-    def test_delete_resource(self, client, sample_resource):
+    def test_delete_resource(self, client, admin_user, sample_resource):
         """Test deleting a resource."""
+        # Login first
+        client.post(
+            "/login",
+            data={"username": "testadmin", "password": "Admin123!@#"},
+        )
         response = client.delete(f"/api/resources/{sample_resource.id}")
         assert response.status_code == 204
 

@@ -71,8 +71,39 @@ class TestCSRFProtection:
         assert response.status_code == 400
         assert b"CSRF" in response.data
 
-    def test_get_requests_work_without_csrf(self, csrf_client):
+    def test_get_requests_work_without_csrf(self, csrf_client, app_with_csrf):
         """Test GET requests don't require CSRF token."""
+        # Create admin user and login for authenticated endpoints
+        from app.models import User
+        import re
+
+        with app_with_csrf.app_context():
+            from app import db
+
+            user = User(username="testadmin", is_admin=True, password_must_change=False)
+            user.set_password("Admin123!@#")
+            db.session.add(user)
+            db.session.commit()
+
+        # Get login page to obtain CSRF token
+        login_page = csrf_client.get("/login")
+        csrf_token_match = re.search(
+            rb'name="csrf_token" value="([^"]+)"', login_page.data
+        )
+        assert csrf_token_match is not None
+        csrf_token = csrf_token_match.group(1).decode("utf-8")
+
+        # Login with CSRF token
+        csrf_client.post(
+            "/login",
+            data={
+                "username": "testadmin",
+                "password": "Admin123!@#",
+                "csrf_token": csrf_token,
+            },
+        )
+
+        # Now test GET requests work without CSRF in the request
         response = csrf_client.get("/api/resources")
         assert response.status_code == 200
 

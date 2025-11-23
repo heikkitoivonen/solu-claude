@@ -1,6 +1,7 @@
 """Authentication routes for user login, logout, and password management."""
 
 import re
+from urllib.parse import urljoin, urlparse
 
 from flask import Blueprint, Response, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
@@ -9,6 +10,29 @@ from app import db
 from app.models import User
 
 auth = Blueprint("auth", __name__)
+
+
+def is_safe_url(target: str) -> bool:
+    """
+    Check if a URL is safe for redirects.
+
+    Prevents open redirect vulnerabilities by ensuring the URL is relative
+    or points to the same host.
+
+    Args:
+        target: The URL to check
+
+    Returns:
+        True if the URL is safe, False otherwise
+    """
+    if not target:
+        return False
+
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+
+    # Must use http or https and must be same host
+    return test_url.scheme in ("http", "https") and ref_url.netloc == test_url.netloc
 
 
 def validate_password(password: str, current_password: str | None = None) -> tuple[bool, str]:
@@ -76,7 +100,11 @@ def login() -> str | Response:
                 flash("You must change your password before continuing", "warning")
                 return redirect(url_for("auth.change_password"))
 
+            # Validate redirect URL to prevent open redirect vulnerability
             next_page = request.args.get("next")
+            if next_page and not is_safe_url(next_page):
+                next_page = None
+
             return redirect(next_page if next_page else url_for("main.admin"))
         else:
             flash("Invalid username or password", "error")

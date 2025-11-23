@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from flask_login import UserMixin
@@ -14,7 +14,7 @@ class User(UserMixin, db.Model):  # type: ignore[name-defined]
     password_hash = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     password_must_change = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def __repr__(self) -> str:
         return f"<User {self.username}>"
@@ -42,7 +42,7 @@ class Floorplan(db.Model):  # type: ignore[name-defined]
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     image_filename = db.Column(db.String(500), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     resources = db.relationship(
         "Resource", backref="floorplan", lazy=True, cascade="all, delete-orphan"
     )
@@ -66,7 +66,7 @@ class Resource(db.Model):  # type: ignore[name-defined]
     x_coordinate = db.Column(db.Integer, nullable=False)
     y_coordinate = db.Column(db.Integer, nullable=False)
     floorplan_id = db.Column(db.Integer, db.ForeignKey("floorplan.id"), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Room-specific metadata
     room_number = db.Column(db.String(50), nullable=True)

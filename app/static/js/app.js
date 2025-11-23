@@ -11,6 +11,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const floorplanImage = document.getElementById('floorplanImage');
     const cursor = document.getElementById('cursor');
 
+    // XSS protection: HTML escape function
+    function escapeHtml(unsafe) {
+        if (unsafe === null || unsafe === undefined) return '';
+        return String(unsafe)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     // Handle search on button click
     searchButton.addEventListener('click', performSearch);
 
@@ -66,18 +77,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const countText = multipleResultsSection.querySelector('.results-count');
         countText.textContent = `Found ${count} matching resource${count !== 1 ? 's' : ''}. Click on one to view its location:`;
 
-        // Build results list
+        // Build results list with XSS protection
         resultsList.innerHTML = results.map((result, index) => {
             const resource = result.resource;
             const floorplan = result.floorplan;
 
             return `
                 <div class="result-card" onclick="selectResult(${index})">
-                    <h3>${resource.name}</h3>
+                    <h3>${escapeHtml(resource.name)}</h3>
                     <div class="result-meta">
-                        <span class="type">Type: ${resource.type}</span>
-                        <span>Location: ${floorplan ? floorplan.name : 'Unknown'}</span>
-                        <span>Coordinates: (${resource.x_coordinate}, ${resource.y_coordinate})</span>
+                        <span class="type">Type: ${escapeHtml(resource.type)}</span>
+                        <span>Location: ${escapeHtml(floorplan ? floorplan.name : 'Unknown')}</span>
+                        <span>Coordinates: (${escapeHtml(resource.x_coordinate)}, ${escapeHtml(resource.y_coordinate)})</span>
                     </div>
                 </div>
             `;
@@ -105,14 +116,15 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Update resource information
+        // Update resource information (using textContent for XSS protection)
         resourceName.textContent = resource.name;
         resourceType.textContent = `Type: ${resource.type}`;
 
-        // Update floorplan information
+        // Update floorplan information (using textContent for XSS protection)
         floorplanName.textContent = `Location: ${floorplan.name}`;
 
         // Set floorplan image and wait for it to load
+        // Note: floorplan.image_filename comes from server and should already be sanitized
         floorplanImage.onload = function() {
             // Position the cursor at the resource coordinates
             positionCursor(resource.x_coordinate, resource.y_coordinate);
@@ -125,7 +137,9 @@ document.addEventListener('DOMContentLoaded', function() {
             showError('Failed to load floorplan image');
         };
 
-        floorplanImage.src = `/static/floorplans/${floorplan.image_filename}`;
+        // Sanitize filename to prevent directory traversal
+        const sanitizedFilename = floorplan.image_filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+        floorplanImage.src = `/static/floorplans/${sanitizedFilename}`;
     }
 
     function positionCursor(x, y) {

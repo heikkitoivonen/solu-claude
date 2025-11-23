@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 from flask import Flask
@@ -18,8 +19,16 @@ def create_app(config: dict[str, Any] | None = None) -> Flask:
     # Default configuration
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["SECRET_KEY"] = "dev-secret-key-change-in-production"
+    # Use environment variable for SECRET_KEY, fall back to dev key only in development
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
     app.config["WTF_CSRF_TIME_LIMIT"] = None  # No time limit for CSRF tokens
+    app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB file size limit
+
+    # Secure session cookie configuration
+    app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_ENV") == "production"
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["PERMANENT_SESSION_LIFETIME"] = 3600  # 1 hour
 
     # Override with custom config if provided
     if config:

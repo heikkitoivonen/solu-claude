@@ -2,6 +2,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get CSRF token from meta tag
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
+    // XSS protection: HTML escape function
+    function escapeHtml(unsafe) {
+        if (unsafe === null || unsafe === undefined) return '';
+        return String(unsafe)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     // Helper function to get headers with CSRF token
     function getHeaders(includeContentType = true) {
         const headers = {
@@ -85,14 +96,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         floorplansList.innerHTML = floorplans.map(fp => `
-            <div class="list-item" data-id="${fp.id}">
+            <div class="list-item" data-id="${escapeHtml(fp.id)}">
                 <div class="list-item-info">
-                    <strong>${fp.name}</strong>
-                    <small>${fp.image_filename}</small>
+                    <strong>${escapeHtml(fp.name)}</strong>
+                    <small>${escapeHtml(fp.image_filename)}</small>
                 </div>
                 <div class="list-item-actions">
-                    <button class="btn btn-edit" onclick="viewFloorplan(${fp.id})">View</button>
-                    <button class="btn btn-danger" onclick="deleteFloorplan(${fp.id})">Delete</button>
+                    <button class="btn btn-edit" onclick="viewFloorplan(${escapeHtml(fp.id)})">View</button>
+                    <button class="btn btn-danger" onclick="deleteFloorplan(${escapeHtml(fp.id)})">Delete</button>
                 </div>
             </div>
         `).join('');
@@ -108,14 +119,14 @@ document.addEventListener('DOMContentLoaded', function() {
         resourcesList.innerHTML = resources.map(res => {
             const floorplan = floorplans.find(fp => fp.id === res.floorplan_id);
             return `
-                <div class="list-item" data-id="${res.id}">
+                <div class="list-item" data-id="${escapeHtml(res.id)}">
                     <div class="list-item-info">
-                        <strong>${res.name}</strong>
-                        <small>${res.type} | ${floorplan ? floorplan.name : 'Unknown'} | (${res.x_coordinate}, ${res.y_coordinate})</small>
+                        <strong>${escapeHtml(res.name)}</strong>
+                        <small>${escapeHtml(res.type)} | ${escapeHtml(floorplan ? floorplan.name : 'Unknown')} | (${escapeHtml(res.x_coordinate)}, ${escapeHtml(res.y_coordinate)})</small>
                     </div>
                     <div class="list-item-actions">
-                        <button class="btn btn-edit" onclick="editResource(${res.id})">Edit</button>
-                        <button class="btn btn-danger" onclick="deleteResource(${res.id})">Delete</button>
+                        <button class="btn btn-edit" onclick="editResource(${escapeHtml(res.id)})">Edit</button>
+                        <button class="btn btn-danger" onclick="deleteResource(${escapeHtml(res.id)})">Delete</button>
                     </div>
                 </div>
             `;
@@ -125,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Populate floorplan select dropdown
     function populateFloorplanSelect() {
         const options = floorplans.map(fp =>
-            `<option value="${fp.id}">${fp.name}</option>`
+            `<option value="${escapeHtml(fp.id)}">${escapeHtml(fp.name)}</option>`
         ).join('');
         resourceFloorplanSelect.innerHTML = '<option value="">-- Select a floorplan --</option>' + options;
 
@@ -339,18 +350,21 @@ document.addEventListener('DOMContentLoaded', function() {
             floorplanResources = resources.filter(r => r.floorplan_id === currentFloorplan.id);
         }
 
+        // Sanitize filename to prevent directory traversal
+        const sanitizedFilename = currentFloorplan.image_filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+
         floorplanViewer.innerHTML = `
-            <h3 style="margin-bottom: 15px; color: #555;">${currentFloorplan.name}</h3>
+            <h3 style="margin-bottom: 15px; color: #555;">${escapeHtml(currentFloorplan.name)}</h3>
             <div class="floorplan-image-container" id="floorplanContainer">
-                <img src="/static/floorplans/${currentFloorplan.image_filename}"
-                     alt="${currentFloorplan.name}"
+                <img src="/static/floorplans/${sanitizedFilename}"
+                     alt="${escapeHtml(currentFloorplan.name)}"
                      id="floorplanImg"
                      style="display: block;">
                 ${floorplanResources.map(res => `
                     <div class="resource-marker"
-                         style="left: ${res.x_coordinate}px; top: ${res.y_coordinate}px;"
-                         title="${res.name} (${res.type})"
-                         data-resource-id="${res.id}">
+                         style="left: ${escapeHtml(res.x_coordinate)}px; top: ${escapeHtml(res.y_coordinate)}px;"
+                         title="${escapeHtml(res.name)} (${escapeHtml(res.type)})"
+                         data-resource-id="${escapeHtml(res.id)}">
                     </div>
                 `).join('')}
             </div>

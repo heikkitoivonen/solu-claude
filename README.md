@@ -120,32 +120,17 @@ Using pip:
 flask db upgrade
 ```
 
-5. **Create an initial admin user**
-
-Start the Python shell and create your first admin user:
-```bash
-uv run python
-```
-
-```python
-from app import create_app, db
-from app.models import User
-
-app = create_app()
-with app.app_context():
-    admin = User(username='admin', is_admin=True, password_must_change=True)
-    admin.set_password('YourSecurePassword123!@#')
-    db.session.add(admin)
-    db.session.commit()
-    print(f"Admin user created: {admin.username}")
-```
-
-6. **Run the application**
+5. **Run the application**
 ```bash
 uv run python run.py  # or: python run.py
 ```
 
-7. **Open your browser**
+On first run, if no admin users exist, a default admin user will be created automatically:
+- **Username**: `admin`
+- **Password**: `Admin123!@#`
+- You'll be prompted to change this password on first login
+
+6. **Open your browser**
 - User Interface: http://localhost:8000
 - Admin Login: http://localhost:8000/login
 - Admin Panel: http://localhost:8000/admin (after login)

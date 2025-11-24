@@ -76,6 +76,12 @@ uv run python run.py
 ```
 Application runs on `http://127.0.0.1:8000`. Debug mode is controlled by the `FLASK_DEBUG` environment variable (set to `true` for debug mode).
 
+**Automatic Default Admin Creation**: On startup, if no admin users exist in the database, a default admin user is automatically created:
+- Username: `admin`
+- Password: `Admin123!@#`
+- Must change password on first login
+- This is handled by the `create_default_admin()` function in `app/__init__.py`, called from `run.py`
+
 ### Managing Dependencies
 
 **Sync dependencies** (install all dependencies from lockfile):

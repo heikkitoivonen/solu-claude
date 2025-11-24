@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2025 Heikki Toivonen
 
+import logging
 import os
 from io import BytesIO
 
@@ -11,6 +12,8 @@ from werkzeug.utils import secure_filename
 
 from app import db
 from app.models import Floorplan, Resource
+
+logger = logging.getLogger(__name__)
 
 main = Blueprint("main", __name__)
 
@@ -162,7 +165,7 @@ def floorplan_detail(floorplan_id: int) -> Response | tuple[str, int]:
                 os.remove(image_path)
         except Exception as e:
             # Log the error but continue with database deletion
-            print(f"Warning: Failed to delete image file {image_path}: {e}")
+            logger.warning(f"Failed to delete image file {image_path}: {e}")
 
         # Delete from database (this will cascade to resources)
         db.session.delete(floorplan)

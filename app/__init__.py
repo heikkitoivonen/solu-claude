@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2025 Heikki Toivonen
 
+import logging
 import os
 from typing import Any
 
@@ -9,6 +10,8 @@ from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
+
+logger = logging.getLogger(__name__)
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -82,8 +85,8 @@ def create_default_admin() -> None:
             admin.set_password("Admin123!@#")
             db.session.add(admin)
             db.session.commit()
-            print("✓ Created default admin user (username: admin, password: Admin123!@#)")
-            print("  Please log in and change the password immediately.")
+            logger.info("Created default admin user (username: admin, password: Admin123!@#)")
+            logger.info("Please log in and change the password immediately.")
     except Exception:
         # Database table might not exist yet (before migrations run)
         pass

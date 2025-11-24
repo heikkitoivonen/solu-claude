@@ -155,6 +155,16 @@ def floorplan_detail(floorplan_id: int) -> Response | tuple[str, int]:
     floorplan = Floorplan.query.get_or_404(floorplan_id)
 
     if request.method == "DELETE":
+        # Delete the image file from filesystem
+        image_path = os.path.join(UPLOAD_FOLDER, floorplan.image_filename)
+        try:
+            if os.path.exists(image_path):
+                os.remove(image_path)
+        except Exception as e:
+            # Log the error but continue with database deletion
+            print(f"Warning: Failed to delete image file {image_path}: {e}")
+
+        # Delete from database (this will cascade to resources)
         db.session.delete(floorplan)
         db.session.commit()
         return "", 204

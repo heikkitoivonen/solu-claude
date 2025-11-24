@@ -1,5 +1,10 @@
 # Office Resource Locator
 
+<!--
+NOTE: Keep this README up to date with all features and project structure changes.
+Last updated: 2024-11 with authentication system and comprehensive security features.
+-->
+
 A Flask web application for locating office resources (people, printers, rooms, etc.) on interactive floorplans. Perfect for small organizations that need a simple way to help employees find resources within their office space.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -15,26 +20,51 @@ A Flask web application for locating office resources (people, printers, rooms, 
 - **Responsive Design**: Works on desktop and mobile devices
 
 ### For Administrators
+- **Secure Authentication**: Login required with admin privileges
 - **Admin Panel**: Comprehensive management interface at `/admin`
-- **Upload Floorplans**: Drag and drop floorplan images (PNG, JPG, SVG, etc.)
+- **Upload Floorplans**: Drag and drop floorplan images (PNG, JPG, JPEG, GIF)
 - **Interactive Resource Placement**: Click on floorplans to set resource coordinates
 - **Full CRUD Operations**: Create, read, update, and delete resources and floorplans
 - **Real-time Preview**: See resources on floorplans as you place them
+- **User Management**: Create, delete, and reset passwords for admin users
+- **Resource Types**: Support for rooms, printers, people, and bathrooms with type-specific metadata
+- **Password Security**: Strong password requirements with mandatory change on first login
 
 ### Technical Features
 - RESTful JSON API
-- CSRF protection for security
+- Admin authentication with Flask-Login
+- CSRF protection for all state-changing operations
+- XSS protection with HTML escaping
+- Secure session cookies (HttpOnly, Secure, SameSite)
+- Environment variable configuration
+- Image content validation using Pillow
+- File size limits (16MB) and secure file handling
 - SQLite database with SQLAlchemy ORM
-- Database migrations with Flask-Migrate
+- Database migrations with Flask-Migrate (timestamp-based)
 - Application factory pattern for testability
+- Comprehensive test suite with 81% branch coverage
 
 ## Screenshots
 
 ### User Search Interface
 Search for any resource and see its location on the floorplan with an animated cursor.
 
-### Admin Panel
-Upload floorplans, add resources, and manage everything through an intuitive interface.
+![Search Interface](search.png)
+
+### Resource View with Floorplan
+View the selected resource on the floorplan with an animated cursor showing the exact location.
+
+![Resource View](view.png)
+
+### Admin Panel - Top
+Upload floorplans, manage resources, and view all your floorplans and resources.
+
+![Admin Panel Top](admin_top.png)
+
+### Admin Panel - Bottom
+Interactive floorplan view showing all resources with coordinates and management options.
+
+![Admin Panel Bottom](admin_bottom.png)
 
 ## Quick Start
 
@@ -65,7 +95,20 @@ pip install -r requirements.txt
 pip install -r requirements-dev.txt
 ```
 
-3. **Initialize the database**
+3. **Set up environment variables (recommended for production)**
+
+Create a `.env` file (use `.env.example` as a template):
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set a secure SECRET_KEY:
+```bash
+# Generate a secure secret key
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+4. **Initialize the database**
 
 Using uv:
 ```bash
@@ -77,40 +120,70 @@ Using pip:
 flask db upgrade
 ```
 
-4. **Add sample data (optional)**
+5. **Create an initial admin user**
+
+Start the Python shell and create your first admin user:
 ```bash
-uv run python add_test_data.py  # or: python add_test_data.py
+uv run python
 ```
 
-5. **Run the application**
+```python
+from app import create_app, db
+from app.models import User
+
+app = create_app()
+with app.app_context():
+    admin = User(username='admin', is_admin=True, password_must_change=True)
+    admin.set_password('YourSecurePassword123!@#')
+    db.session.add(admin)
+    db.session.commit()
+    print(f"Admin user created: {admin.username}")
+```
+
+6. **Run the application**
 ```bash
 uv run python run.py  # or: python run.py
 ```
 
-6. **Open your browser**
+7. **Open your browser**
 - User Interface: http://localhost:8000
-- Admin Panel: http://localhost:8000/admin
+- Admin Login: http://localhost:8000/login
+- Admin Panel: http://localhost:8000/admin (after login)
 
 ## Project Structure
 
 ```
 .
 ├── app/
-│   ├── __init__.py           # Application factory with CSRF protection
-│   ├── models.py             # Database models (Floorplan, Resource)
-│   ├── routes.py             # API routes and view handlers
+│   ├── __init__.py           # Application factory with security configuration
+│   ├── models.py             # Database models (User, Floorplan, Resource)
+│   ├── routes.py             # Main API routes and view handlers
+│   ├── auth_routes.py        # Authentication routes (login, logout, password management)
 │   ├── static/
 │   │   ├── css/              # Stylesheets for user and admin UIs
-│   │   ├── js/               # JavaScript for interactivity
+│   │   ├── js/               # JavaScript with XSS protection
+│   │   │   ├── app.js        # User search interface logic
+│   │   │   └── admin.js      # Admin panel interactivity
 │   │   └── floorplans/       # Uploaded floorplan images
 │   └── templates/
+│       ├── base.html         # Base template with Jinja2 inheritance
 │       ├── index.html        # User search interface
-│       └── admin.html        # Admin management panel
-├── migrations/               # Database migration scripts
+│       ├── admin.html        # Admin management panel
+│       ├── login.html        # Admin login page
+│       ├── change_password.html  # Password change interface
+│       └── manage_users.html # User management interface
+├── migrations/               # Database migration scripts (timestamp-based)
+├── tests/
+│   ├── conftest.py           # Pytest fixtures and configuration
+│   ├── test_models.py        # Database model tests
+│   ├── test_routes.py        # API endpoint tests
+│   ├── test_auth_routes.py   # Authentication tests (50 tests)
+│   └── test_security.py      # CSRF and security tests
 ├── run.py                    # Application entry point
+├── .env.example              # Environment variable template
 ├── CLAUDE.md                 # Developer documentation
 ├── LICENSE.txt               # MIT License
-└── pyproject.toml           # Project dependencies (uv/pip)
+└── pyproject.toml            # Project dependencies (uv/pip)
 ```
 
 ## Usage
@@ -124,15 +197,21 @@ uv run python run.py  # or: python run.py
 
 ### For Administrators
 
-1. Go to http://localhost:8000/admin
+1. **Login:**
+   - Go to http://localhost:8000/login
+   - Enter your admin username and password
+   - If this is your first login, you'll be prompted to change your password
+
 2. **Upload a Floorplan:**
+   - Go to http://localhost:8000/admin
    - Enter a name (e.g., "First Floor")
-   - Select an image file
+   - Select an image file (PNG, JPG, JPEG, or GIF - max 16MB)
    - Click "Upload Floorplan"
 
 3. **Add a Resource:**
    - Select a floorplan from the dropdown
-   - Enter resource name and type
+   - Enter resource name and select type (room, printer, person, bathroom)
+   - Enter type-specific details (e.g., room number, printer model, email)
    - Click on the floorplan image to set coordinates
    - Click "Create Resource"
 
@@ -143,6 +222,11 @@ uv run python run.py  # or: python run.py
 
 5. **Delete:**
    - Click "Delete" on any resource or floorplan
+
+6. **Manage Admin Users:** (from user management page)
+   - Create new admin users with secure passwords
+   - Reset passwords for existing users
+   - Delete users (except yourself)
 
 ## API Endpoints
 
@@ -178,38 +262,66 @@ Returns all resources matching the query with their floorplan information.
 }
 ```
 
-### Admin Endpoints (CSRF Protected)
+### Admin Endpoints (Authentication Required)
 
-All POST/PUT/DELETE operations require a valid CSRF token.
+All floorplan and resource endpoints require authentication. POST/PUT/DELETE operations also require valid CSRF tokens.
+
+#### Authentication
+- `POST /login` - Admin login
+- `POST /logout` - Logout current user
+- `GET /change-password` - Password change form
+- `POST /change-password` - Update password
+- `GET /admin/users` - List admin users
+- `POST /admin/users/create` - Create new admin user
+- `POST /admin/users/<id>/delete` - Delete admin user
+- `POST /admin/users/<id>/reset-password` - Reset user password
 
 #### Floorplans
-- `GET /api/floorplans` - List all floorplans
-- `POST /api/floorplans` - Upload a new floorplan (multipart/form-data)
-- `GET /api/floorplans/<id>` - Get floorplan details
+- `GET /api/floorplans` - List all floorplans (requires authentication)
+- `POST /api/floorplans` - Upload a new floorplan (multipart/form-data, validates image content)
+- `GET /api/floorplans/<id>` - Get floorplan details (requires authentication)
 - `PUT /api/floorplans/<id>` - Update floorplan
 - `DELETE /api/floorplans/<id>` - Delete floorplan (cascades to resources)
 
 #### Resources
-- `GET /api/resources` - List all resources
-- `POST /api/resources` - Create a new resource
-- `GET /api/resources/<id>` - Get resource details
+- `GET /api/resources` - List all resources (requires authentication)
+- `POST /api/resources` - Create a new resource with type-specific metadata
+- `GET /api/resources/<id>` - Get resource details (requires authentication)
 - `PUT /api/resources/<id>` - Update resource
 - `DELETE /api/resources/<id>` - Delete resource
 
 ## Configuration
 
-Edit `app/__init__.py` to configure:
+The application uses environment variables for configuration. Create a `.env` file based on `.env.example`:
 
-```python
-# Database
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-
-# Security (change in production!)
-app.config['SECRET_KEY'] = 'dev-secret-key-change-in-production'
-
-# CSRF
-app.config['WTF_CSRF_TIME_LIMIT'] = None
+```bash
+# Flask Configuration
+SECRET_KEY=your-secret-key-here-change-me-in-production
+FLASK_ENV=development  # or production
+FLASK_DEBUG=true       # Only set to true in development, NEVER in production
 ```
+
+### Configuration Options
+
+**SECRET_KEY** (required in production)
+- Generate with: `python -c "import secrets; print(secrets.token_hex(32))"`
+- Used for session encryption and CSRF tokens
+- Defaults to development key if not set (insecure!)
+
+**FLASK_ENV**
+- `development` or `production`
+- In production mode, secure session cookies are enabled
+
+**FLASK_DEBUG**
+- Set to `true` only in development
+- Never enable debug mode in production
+
+**Database**
+- SQLite database stored in `app.db`
+- Can be configured in `app/__init__.py` if needed:
+  ```python
+  app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+  ```
 
 ## Database Management
 
@@ -256,10 +368,35 @@ mypy app/
 
 ## Security
 
+The application implements comprehensive security measures:
+
+### Authentication & Authorization
+- **Admin Authentication**: Flask-Login with session-based authentication
+- **Password Requirements**: Minimum 10 characters with uppercase, lowercase, numbers, and special characters
+- **Password Management**: Mandatory password change on first login, secure password reset
+- **Admin-Only Access**: All management operations require admin privileges
+
+### Session Security
+- **Secure Cookies**: HttpOnly, Secure (in production), SameSite=Lax
+- **Session Timeout**: 1-hour session lifetime
+- **Environment-Based Secrets**: SECRET_KEY from environment variables
+
+### Input Validation & Protection
 - **CSRF Protection**: All state-changing operations require valid CSRF tokens
-- **Secret Key**: Change `SECRET_KEY` in production
-- **File Uploads**: Validates file extensions for uploaded floorplans
-- **Secure Filenames**: Uses `secure_filename()` for uploaded files
+- **XSS Protection**: HTML escaping in JavaScript to prevent cross-site scripting
+- **Open Redirect Protection**: URL validation for safe redirects
+- **SQL Injection Protection**: SQLAlchemy ORM with parameterized queries
+
+### File Upload Security
+- **Content Validation**: Pillow-based image verification (not just extension checking)
+- **File Size Limits**: 16MB maximum upload size
+- **Allowed Formats**: PNG, JPEG, GIF only (SVG removed to prevent XSS)
+- **Secure Filenames**: `secure_filename()` with timestamp prefixes
+
+### Additional Security Measures
+- **Timezone-Aware Timestamps**: Prevents timezone manipulation attacks
+- **Debug Mode Control**: Environment-based, never enabled in production
+- **Database Security**: Prepared statements via SQLAlchemy ORM
 
 ## Development
 
@@ -297,26 +434,31 @@ uv run pytest --cov=app --cov-report=term-missing
 ```
 tests/
 ├── conftest.py          # Pytest fixtures and configuration
-├── test_models.py       # Database model tests
-├── test_routes.py       # API endpoint tests
+├── test_models.py       # Database model tests (User, Floorplan, Resource)
+├── test_routes.py       # API endpoint tests (search, floorplans, resources)
+├── test_auth_routes.py  # Authentication tests (login, password, user management - 50 tests)
 └── test_security.py     # CSRF protection tests
 ```
 
 ### Test Coverage
 
-Current test coverage: **96%** (with branch coverage enabled)
+Current test coverage: **81% with branch coverage** (89 tests)
 
 The test suite includes:
 - **Model Tests**: Database operations, relationships, cascade deletes
-- **Route Tests**: All API endpoints, CRUD operations, file uploads
-- **Security Tests**: CSRF protection validation
-- **Integration Tests**: End-to-end workflows
+- **Route Tests**: All API endpoints, CRUD operations, file uploads with authentication
+- **Authentication Tests**: Login, logout, password changes, user management (50 comprehensive tests)
+- **Security Tests**: CSRF protection, XSS prevention validation
+- **Integration Tests**: End-to-end workflows with authentication
+
+**Coverage Requirement**: Minimum 80% branch coverage must be maintained
 
 ### Writing New Tests
 
 Tests use pytest fixtures defined in `conftest.py`:
 - `app` - Flask application instance with test database
 - `client` - Test client for making requests
+- `admin_user` - Pre-created admin user for authentication testing
 - `sample_floorplan` - Pre-created floorplan for testing
 - `sample_resource` - Pre-created resource for testing
 - `multiple_resources` - Multiple resources for search testing
@@ -380,15 +522,6 @@ Before committing code:
 3. Run `uv run pytest` to ensure tests pass
 4. Commit your changes
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
 
 ## License
 

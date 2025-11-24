@@ -1,5 +1,10 @@
 # CLAUDE.md
 
+<!--
+IMPORTANT: Keep this file up to date with all features, architecture changes, and project structure updates.
+Last updated: 2024-11 with authentication system, comprehensive security features, and environment configuration.
+-->
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Application Purpose
@@ -12,32 +17,54 @@ This is an **office resource locator** for small organizations. The application 
 ## Application Architecture
 
 This is a Flask web application using the **application factory pattern**. The app is created via `create_app()` in `app/__init__.py`, which:
-- Initializes Flask extensions (SQLAlchemy, Flask-Migrate)
-- Registers blueprints (currently just the `main` blueprint from `routes.py`)
+- Initializes Flask extensions (SQLAlchemy, Flask-Migrate, Flask-Login, Flask-WTF)
+- Registers blueprints (`main` from `routes.py` and `auth` from `auth_routes.py`)
+- Configures security settings (CSRF protection, session cookies, file upload limits)
 - Accepts optional config dict for testing/custom configurations
 
 The application structure is:
-- `run.py` - Entry point that creates app instance and runs development server
-- `app/__init__.py` - Application factory, extension initialization, and blueprint registration
-- `app/models.py` - SQLAlchemy models (currently User/Post as starter code; needs to be updated for Floorplan/Resource models)
-- `app/routes.py` - All API routes defined in a single Blueprint named `main`
+- `run.py` - Entry point that creates app instance and runs development server (with environment-based debug mode)
+- `app/__init__.py` - Application factory, extension initialization, security configuration, and blueprint registration
+- `app/models.py` - SQLAlchemy models (User, Floorplan, Resource) with timezone-aware timestamps
+- `app/routes.py` - Main API routes (search, floorplans, resources) in the `main` Blueprint
+- `app/auth_routes.py` - Authentication routes (login, logout, password management, user management) in the `auth` Blueprint
+- `app/templates/` - Jinja2 templates using template inheritance with `base.html`
+- `app/static/` - CSS and JavaScript with XSS protection
 
 ## Database Architecture
 
 - **ORM**: SQLAlchemy with Flask-SQLAlchemy
-- **Migrations**: Flask-Migrate handles schema versioning
+- **Migrations**: Flask-Migrate handles schema versioning (timestamp-based filenames)
 - **Database**: SQLite (file: `app.db`)
 
-**Current Models** (starter code):
-- User (one-to-many with Post)
-- Post (belongs to User)
+**Models**:
 
-**Intended Models** (for office resource locator):
-- Floorplan: Stores floorplan images and metadata
-- Resource: Stores searchable resources (rooms, printers, people, etc.) with x/y coordinates on floorplans
-- User: For admin authentication and permissions
+1. **User** - Admin authentication and user management
+   - Fields: username, email, password_hash, is_admin, password_must_change, created_at
+   - Uses Flask-Login's UserMixin for authentication
+   - Password hashing with werkzeug's generate_password_hash
+   - Methods: set_password(), check_password(), to_dict()
 
-All models should include `to_dict()` methods for JSON serialization.
+2. **Floorplan** - Stores floorplan images and metadata
+   - Fields: name, image_filename, created_at
+   - One-to-many relationship with Resource (cascade delete)
+   - Methods: to_dict()
+
+3. **Resource** - Searchable resources with coordinates on floorplans
+   - Fields: name, type, x_coordinate, y_coordinate, floorplan_id, created_at
+   - Belongs to Floorplan (foreign key)
+   - Resource types: room, printer, person, bathroom
+   - Type-specific metadata fields:
+     - Room: room_number, room_type (meeting/individual), capacity
+     - Printer: printer_name, color_type (color/bw), printer_model
+     - Person: email, title
+     - Bathroom: gender_type (men/women/unisex)
+   - Methods: to_dict() (returns type-specific fields)
+
+**Key Features**:
+- All models include `to_dict()` methods for JSON serialization
+- Timezone-aware timestamps using `datetime.now(timezone.utc)`
+- Cascade deletes: Deleting a floorplan also deletes its resources
 
 ## Common Commands
 
@@ -47,7 +74,7 @@ All models should include `to_dict()` methods for JSON serialization.
 ```bash
 uv run python run.py
 ```
-Application runs on `http://localhost:8000` with debug mode enabled.
+Application runs on `http://127.0.0.1:8000`. Debug mode is controlled by the `FLASK_DEBUG` environment variable (set to `true` for debug mode).
 
 ### Managing Dependencies
 
@@ -114,7 +141,7 @@ uv run pytest tests/test_models.py  # Run specific file
 uv run pytest --cov=app --cov-report=term-missing --cov-report=html --cov-branch
 ```
 
-**Test coverage**: 82% with branch coverage (89 tests passing)
+**Test coverage**: 81% with branch coverage (89 tests passing)
 
 **IMPORTANT: Test coverage requirement**
 - **Minimum test coverage must be 80% or greater**
@@ -173,17 +200,107 @@ uv run ruff check app/ tests/ run.py && uv run black --check app/ tests/ run.py 
 
 **Type Hints**: The codebase uses comprehensive type hints on all function definitions. When adding new functions, always include parameter and return type annotations.
 
+## Security Features
+
+The application implements comprehensive security measures:
+
+### Authentication & Authorization
+- **Flask-Login**: Session-based authentication for admin users
+- **Password Requirements**: Minimum 10 characters with uppercase, lowercase, numbers, and special characters
+- **Password Validation**: `validate_password()` function in `auth_routes.py` enforces requirements
+- **Mandatory Password Change**: New users must change password on first login (`password_must_change` flag)
+- **Admin-Only Access**: All management endpoints protected with `@login_required` decorator
+
+### Session Security
+- **Secure Cookies**: HttpOnly enabled, Secure in production, SameSite=Lax
+- **Session Timeout**: 1-hour lifetime (`PERMANENT_SESSION_LIFETIME`)
+- **Environment-Based Secrets**: SECRET_KEY from environment variables (`.env` file)
+
+### Input Validation & Protection
+- **CSRF Protection**: Flask-WTF protects all POST/PUT/DELETE operations
+- **XSS Protection**: HTML escaping in JavaScript (`escapeHtml()` function in `app.js` and `admin.js`)
+- **Open Redirect Protection**: `is_safe_url()` function validates redirect URLs in `auth_routes.py`
+- **SQL Injection Protection**: SQLAlchemy ORM with parameterized queries
+
+### File Upload Security
+- **Content Validation**: `validate_image()` function uses Pillow to verify file content (not just extension)
+- **File Size Limits**: 16MB maximum (`MAX_CONTENT_LENGTH`)
+- **Allowed Formats**: PNG, JPEG, GIF only (SVG removed to prevent XSS attacks)
+- **Secure Filenames**: `secure_filename()` with timestamp prefixes to prevent conflicts and directory traversal
+
+### Additional Security
+- **Timezone-Aware Timestamps**: Using `datetime.now(timezone.utc)` prevents timezone manipulation
+- **Debug Mode Control**: Environment-based, controlled by `FLASK_DEBUG` variable
+- **Rate Limiting**: Not currently implemented (noted as enhancement in security review)
+
+## Environment Configuration
+
+The application uses environment variables for configuration. Create a `.env` file based on `.env.example`:
+
+```bash
+# Flask Configuration
+SECRET_KEY=your-secret-key-here-change-me-in-production
+FLASK_ENV=development  # or production
+FLASK_DEBUG=true       # Only in development, NEVER in production
+```
+
+### Environment Variables
+
+**SECRET_KEY** (required in production):
+- Generate with: `python -c "import secrets; print(secrets.token_hex(32))"`
+- Used for session encryption and CSRF tokens
+- Defaults to development key if not set (insecure!)
+
+**FLASK_ENV**:
+- `development` or `production`
+- In production mode, secure session cookies are enabled
+
+**FLASK_DEBUG**:
+- Set to `true` only in development
+- Controlled in `run.py` via `os.environ.get("FLASK_DEBUG", "False").lower() == "true"`
+- Never enable in production
+
 ## API Endpoints
 
 All endpoints are RESTful and return JSON.
 
-**Current Endpoints** (starter code):
-- Users: `/api/users` (GET, POST), `/api/users/<id>` (GET, PUT, DELETE)
-- Posts: `/api/posts` (GET, POST), `/api/posts/<id>` (GET, PUT, DELETE)
-- Root: `/` returns welcome message with endpoint listing
+### Public Endpoints
 
-**Intended Endpoints** (for office resource locator):
-- Search: `/api/search?q=<query>` - Search for resources by name, returns matching resource with floorplan info
-- Floorplans (admin): `/api/floorplans` (GET, POST), `/api/floorplans/<id>` (GET, PUT, DELETE) - Manage floorplan images
-- Resources (admin): `/api/resources` (GET, POST), `/api/resources/<id>` (GET, PUT, DELETE) - Manage resources with x/y coordinates
-- Authentication: Endpoints for admin login/logout
+**Views**:
+- `/` - User search interface (public)
+- `/admin` - Admin panel (requires authentication)
+- `/login` - Admin login page
+
+**Search API**:
+- `GET /api/search?q=<query>` - Search for resources by name, returns matching resources with floorplan info (public)
+
+### Admin Endpoints (Authentication Required)
+
+All floorplan and resource API endpoints require authentication via Flask-Login. POST/PUT/DELETE operations also require valid CSRF tokens.
+
+**Authentication** (`auth` blueprint):
+- `POST /login` - Admin login
+- `GET /logout` - Logout (requires authentication)
+- `GET /change-password` - Password change form (requires authentication)
+- `POST /change-password` - Update password (requires authentication)
+- `GET /admin/users` - List admin users (requires authentication)
+- `POST /admin/users/create` - Create new admin user (requires authentication)
+- `POST /admin/users/<id>/delete` - Delete admin user (requires authentication)
+- `POST /admin/users/<id>/reset-password` - Reset user password (requires authentication)
+
+**Floorplans** (`main` blueprint):
+- `GET /api/floorplans` - List all floorplans (requires authentication)
+- `POST /api/floorplans` - Upload new floorplan with file or JSON (requires authentication, CSRF protected)
+  - Supports multipart/form-data for file uploads (validates image content with Pillow)
+  - Max file size: 16MB
+  - Allowed formats: PNG, JPEG, GIF (SVG removed for security)
+- `GET /api/floorplans/<id>` - Get floorplan details (requires authentication)
+- `PUT /api/floorplans/<id>` - Update floorplan (requires authentication, CSRF protected)
+- `DELETE /api/floorplans/<id>` - Delete floorplan (cascades to resources) (requires authentication, CSRF protected)
+
+**Resources** (`main` blueprint):
+- `GET /api/resources` - List all resources (requires authentication)
+- `POST /api/resources` - Create new resource with type-specific metadata (requires authentication, CSRF protected)
+- `GET /api/resources/<id>` - Get resource details (requires authentication)
+- `PUT /api/resources/<id>` - Update resource (requires authentication, CSRF protected)
+- `DELETE /api/resources/<id>` - Delete resource (requires authentication, CSRF protected)

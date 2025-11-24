@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Heikki Toivonen
+
 from app import create_app, db
 from app.models import Floorplan, Resource
 

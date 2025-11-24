@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Heikki Toivonen
+
 import os
 
 from app import create_app, create_default_admin

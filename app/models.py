@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Heikki Toivonen
+
 from datetime import datetime, timezone
 from typing import Any
 

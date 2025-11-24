@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Heikki Toivonen
+
 """
 Tests for security features (CSRF protection).
 """

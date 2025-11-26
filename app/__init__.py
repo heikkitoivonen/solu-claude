@@ -3,6 +3,7 @@
 
 import logging
 import os
+import sys
 from typing import Any
 
 from flask import Flask
@@ -61,6 +62,13 @@ def create_app(config: dict[str, Any] | None = None) -> Flask:
 
     app.register_blueprint(main)
     app.register_blueprint(auth)
+
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        stream=sys.stdout
+    )
 
     return app
 
